@@ -5,10 +5,9 @@ Features:
   Whitelist Management: Compares detected devices against an authorized list.
   Dynamic Terminal UI: Uses the rich library to display beautiful, real-time output.
   Customizable Settings: Configure scan intervals, whitelist files, notification methods, and more.
-
+  Unauthorized Device Detection: Automatically alerts you via Discord and/or TTS when an unknown device is found.
 
 Coming Soon:
-  Unauthorized Device Detection: Automatically alerts you via Discord and/or TTS when an unknown device is found.
   Deauthentication Module: (Linux/Kali Only) Optionally disconnect unauthorized devices using crafted 802.11 deauth frames.
 
 Requirements:
