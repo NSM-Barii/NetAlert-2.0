@@ -1,0 +1,10 @@
+{
+      "display_name": "NSM BARII",
+      "monitor_mode": false,
+      "continous_monitoring": false,
+      "discord_webhook": "https://discord.com/api/webhooks/1334233178939981877/u7UY6ldP1mEVigoF5LKIMzTJ3j6YKQg8nG8UNnUAgd9IFuc1j0sQeOepmTDxKVxeElmo",
+      "intrusion_updates": true,
+      "live_updates": false,
+      "subnet_address": "192.168.1.0/24",
+      "scan_interval": "5"
+}
