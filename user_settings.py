@@ -1,3 +1,5 @@
+# MODULE ONLY FOR USERT SETTING // SETTING JSON FILE       # DEVELOPED BY NSM BARII
+
 
 # UI IMPORTS
 from rich.panel import Panel
