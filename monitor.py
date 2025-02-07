@@ -17,7 +17,7 @@ import pyfiglet
 import socket
 import time
 from datetime import datetime
-import requests, json
+import requests, json, sys, subprocess
 
 
 
@@ -38,6 +38,12 @@ class monitor_mode():
         from scanlogic import file_handling 
         data = file_handling()
         device_info = data.load_file(type=2)
+
+        if  device_info ==  None:
+           console.print("[bold red]No white list found,[/bold red] [yellow]Returning you to the main menu where u can create one!!![/yellow]")
+           time.sleep(1.5)
+           subprocess.run([sys.executable, "main.py"])  # Restart the script
+
 
 
         # TABLE FOR WHITE LIST PRINT
@@ -92,10 +98,41 @@ class monitor_mode():
         # IMPORT SUBNET
         from user_settings import user_settings
         ns = user_settings().load_file()
-
+         
         subnet = ns['subnet_address']
+        
+        if not subnet:
+            console.print("No valid subnet found!")
+            import ipaddress
+                     
+            while True:
+                try:
+                    subnet = console.input("[bold blue]Enter Network Range:[/bold blue] ")
+                    valid_subnet = ipaddress.ip_network(subnet, strict=False)
+                    valid_subnet = str(valid_subnet)
+
+                    # NOW TO SAVE SUBNET
+                    data = user_settings()
+                    load = data.load_file()
+                    load["subnet_address"] = valid_subnet
+                    data.save_data(changed_data=load)
+
+                    console.print(f"[bold green]IP Subnet:{valid_subnet}  Successfully Updated![/bold green]\n\n")
+                    time.sleep(1.8)
+                    break
+
+                except ipaddress.AddressValueError as e:
+                    console.print(e)
+                
+                except ipaddress.NetmaskValueError as e:
+                    console.print(e)
+
+                except Exception as e:
+                    console.print(e)
+
 
         # FOR TABLE NUMBERS
+ 
         online_devices = 0
         offline_devices = 0
 

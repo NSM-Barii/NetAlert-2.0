@@ -22,13 +22,6 @@ import pyttsx3, threading
 
 
 
-
-
-
-
-
-
-
 class connection_status():
 
     def __init__(self):
