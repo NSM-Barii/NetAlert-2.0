@@ -20,8 +20,27 @@ console_width = console.size.width
 import pyfiglet
 
 # ETC IMPORTS
-import threading, requests, random, os, time
-from plyer import notification 
+import threading, requests, random, os, time, sys
+from plyer import notification
+
+
+# FILE SETTINGS
+from pathlib import Path
+
+# Determine where the program is running from (script or bundled executable)
+if getattr(sys, 'frozen', False):  # Running as an executable
+    base_dir = Path(sys._MEIPASS)  # Get the path for bundled resources
+else:  # Running as a Python script
+    base_dir = Path.home() / "Documents" / ".NetAlert2"
+
+base_dir.mkdir(parents=True, exist_ok=True)
+
+
+# ACTIVE IP LIST
+device_list_file = base_dir / "active_device_list.json"
+
+# WHITE LIST
+white_list_file = base_dir / "white_list.json"
 
 
 
@@ -43,11 +62,13 @@ class arp_scanner():
         from user_settings import user_settings
         data = user_settings().load_file()
         default_subnet = data["subnet_address"]
+
         
         if default_subnet:
             option = f"( or Press Enter for {default_subnet} )"
-        else:
 
+        else:
+            default_subnet = ""
             option = ""
 
         while True:
@@ -180,6 +201,7 @@ class white_list():
     def device_list(self):
     
         # LOAD DEVICES
+        print("heyy")
         devices = self.data.load_file(type=1)
 
         # CREATE A EMPTY LIST FOR STORING IPS, DEFINE WHITE LIST FOR USER INPUT AND CHOICES SO USER CANT REPEAT THE SAME INPUT
@@ -338,9 +360,9 @@ class white_list():
 class file_handling():
 
     def __init__(self):
-        self.file_devices = "active_device_list.json"
-        self.file_white_list = "white_list.json"
-        self.file_user_setting = "user_setting.json"
+        self.file_devices = device_list_file
+        self.file_white_list = white_list_file
+        #self.file_user_setting = "user_setting.json"
         pass
 
     def create_file(self, letter, type):
@@ -409,8 +431,8 @@ class file_handling():
             with open(file_path, "w") as file:
                 json.dump(data, file, indent=num)
                 console.print(f"[bold green]{msg} successfully Created[/bold green]")
-         
 
+        
 
         except Exception as e:
             console.print(e)
@@ -418,27 +440,26 @@ class file_handling():
     def load_file(self, type):
         """Responsible for loading file information, type 1 is for loading active ip list, type 2 is for loading user made white list"""
         
+        
+        # FOR SELECETING BETWEEN LOADING USER SETTINGS OR SAVED DATA
+        if type == 1:
+            file_path = self.file_devices        # LOAD ACTIVE IP LIST
+        
+        elif type == 2:
+            file_path = self.file_white_list    # LOAD  WHITE LIST
+        
         while True:
-            # FOR SELECETING BETWEEN LOADING USER SETTINGS OR SAVED DATA
-            if type == 1:
-                file_path = self.file_devices        # LOAD ACTIVE IP LIST
-            
-            elif type == 2:
-                file_path = self.file_white_list    # LOAD  WHITE LIST
-
-
-            while True:
-            
-                try:
-                    with open(file_path, "r") as file:
-                        content = json.load(file)
-                       # console.print("File found")
-                        return content
-                    
-                except FileNotFoundError:
-                    console.print("[bold red]Error:[/bold red] [yellow]File not found please perform a Network Scan to[/yellow] [bold green]start defending your network[/bold green]")
-                    #self.create_file(letter="", type=2)
-                    time.sleep(2)
+            try:
+                with open(file_path, "r") as file:
+                    content = json.load(file)
+                    console.print("File found")
+                    return content
+                
+            except FileNotFoundError:
+                console.print("[bold red]Error:[/bold red] [yellow]File not found please perform a Network Scan to[/yellow] [bold green]start defending your network[/bold green]")
+                #self.create_file(letter="", type=2)
+                time.sleep(2)
+                break
 
                 
 class extra_shii():
@@ -491,7 +512,7 @@ class user_interface():
 
         console.print(panel_choices)
         
-
+        
         # USER CHOICE // SELECTION
         while True:
             

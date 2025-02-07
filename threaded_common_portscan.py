@@ -16,7 +16,6 @@ from rich.live import Live
 from rich.console import Console
 console = Console()
 
-bs = "67.10.155.191"
 
 
 # IMPORTS 

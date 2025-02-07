@@ -23,14 +23,15 @@ import pyfiglet, threading, time
 
 # START OF MAIN PROGRAM // ALL MODULES FROM THIS POINT
 if __name__ == "__main__":
-
+    
     # CREATE OBJECTS
     main = user_interface()
     online_status = connection_status()
     utilities = utilities()
     
     
-
+    
+    
     # LOOP THE MAIN PROGRAM 
     while True:
         main.welcome()
