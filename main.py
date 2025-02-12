@@ -30,16 +30,17 @@ if __name__ == "__main__":
     utilities = utilities()
     
     
+    def main_run():
     
-    
-    # LOOP THE MAIN PROGRAM 
-    while True:
-        main.welcome()
-        online_status.connection_check()
-        #t = threading.Thread(target=)
-       # t.start()
-        main.user_choose()
-        utilities.clear_screen()
-        
+        # LOOP THE MAIN PROGRAM 
+        while True:
+            main.welcome()
+            online_status.connection_check()
+            #t = threading.Thread(target=)
+        # t.start()
+            main.user_choose()
+            utilities.clear_screen()
+            
+    main_run()
         
         

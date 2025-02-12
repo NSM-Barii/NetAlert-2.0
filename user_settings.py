@@ -19,6 +19,15 @@ console_width = console.size.width
 import json, os, time, requests
 
 
+# FILE PATH
+from pathlib import Path
+
+base_dir = Path.home() / "Documents" / "NSM Tools" / ".data" / "NetAlert2"
+base_dir.mkdir(parents=True, exist_ok=True)
+
+
+# SETTINGS PATH
+settings_path = base_dir / "settings.json"
 
 
 
@@ -26,7 +35,7 @@ class user_settings():
     """Primary and only responsibility of this class is to keep track of user data/settings!"""
 
     def __init__(self):
-        self.file_user_settings = "user_settings.json"
+        self.file_user_settings = settings_path
     
 
     def save_data(self, changed_data):
@@ -35,7 +44,7 @@ class user_settings():
 
         # NOT NEEDED // BUT I WANTED A MORE COMPACT VARIABLE NAME
         path = self.file_user_settings 
-        indent = 6
+        indent = 10
 
         try:
             with open(path, "w")  as file:
@@ -53,18 +62,21 @@ class user_settings():
 
         # NOT NEEDED // BUT I WANTED A MORE COMPACT VARIABLE NAME
         path = self.file_user_settings 
-
-        try:
-            with open(path, "r") as file:
-                content = json.load(file)
-                return content
-            
-        except FileNotFoundError as e:
-            console.print("User filepath not found", style="bold red")
-            self.create_file()
         
-        except Exception as e:
-            self.create_file()    # PLACE THE ERROR IN CREATE FILE TO MAKE TROUBLE SHOOTING EASIER
+        # AFTER DEFAULT PATH IS CREATED LOOP BACK THROUGH THE TRY BLOCK
+        while True:
+
+            try:
+                with open(path, "r") as file:
+                    content = json.load(file)
+                    return content
+                
+            except FileNotFoundError as e:
+                console.print("User filepath not found", style="bold red")
+                self.create_file()
+            
+            except Exception as e:
+                self.create_file()    # PLACE THE ERROR IN CREATE FILE TO MAKE TROUBLE SHOOTING EASIER
         
         
     def create_file(self):
@@ -72,7 +84,7 @@ class user_settings():
         
         # NOT NEEDED // BUT I WANTED A MORE COMPACT VARIABLE NAME
         path = self.file_user_settings 
-        indent = 6
+        indent = 10
        
 
        # THIS LOOP ENSURES THAT AFTER A EXCEPTION THE MAIN TRY CONDITION IS REATTEMPTED!
@@ -88,7 +100,8 @@ class user_settings():
                     "intrusion_updates": False,
                     "live_updates": False,
                     "subnet_address": "",
-                    "scan_interval": 15
+                    "scan_interval": 15,
+                    "monitor_mode_scans": 0
                 }
 
 
@@ -141,6 +154,13 @@ class settings_menu():
 
             console.print(f"[bold red]{welcome}[/bold red]")
             console.print(load["display_name"])
+            
+            # DISPLAY CURRENT SETTING // MORE FLEXIBLE SETTINGS MODULE
+            console.print(f"\n[bold red]-----  Current Settings  -----[/bold red]\n")
+            for variable, value in load.items():
+                console.print(f"[bold green]{variable}[/bold green] --> [bold blue]{value}[/bold blue]")
+            
+            console.print("\n[bold red]------------------------------[/bold red]\n")
 
             options = Panel(
                             "1. Display name\n\n"
@@ -150,10 +170,10 @@ class settings_menu():
                             "5. Scan Interval\n"
                             "\n6. Exit",
                             
-                            title="Settings",
+                            title="Options",
                             style="red",
                             border_style="bold red",
-                            width=console_width
+                            width=min(130, console_width - 2)
                             )
         
             console.print(options)

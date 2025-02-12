@@ -21,6 +21,16 @@ console = Console()
 # IMPORTS 
 import ipaddress, socket, threading, time, os, requests
 from scapy.all import Ether, ARP, srp
+import manuf
+from pathlib import Path
+
+
+# MAIN DIRECTORY
+base_dir = Path.home() / "Documents" / "NSM Tools" / ".data" / "LAN Scanner"
+base_dir.mkdir(parents=True, exist_ok=True)
+
+# SETTINGS PATH
+file_path = base_dir / "settings.json"
 
 
 
@@ -238,8 +248,8 @@ class get_ip_subnet():
                 return response.text.strip()
 
             else:
-
-                return "unknown"
+                vendor = manuf.MacParser(update=True).get_manuf_long(mac)
+                return vendor
         
         except requests.RequestException as e:
             console.print(mac)
@@ -316,12 +326,34 @@ class get_ip_subnet():
 
 
 
-start = 1
+start = 2
 
 if __name__ == "__main__":
     
     if start == 1:
         nsm = get_ip_subnet(scan_ports=True)
         nsm.threader()
+
+
+console_width = console.size.width
+
+interval = .5
+
+def live_timer():
+    timer = interval * 60
+    panel_t = Panel(f"[bold red]Beginning next subnet scan in:[/bold red][bold green] {timer}[/bold green]",
+                    border_style="bold red",
+                    width=min(130, console_width - 2)
+                    ) 
+    
+    with Live(panel_t, console=console, refresh_per_second=10):
+        while timer > 0:
+            timer -= 1
+            time.sleep(1)
+            panel_t.renderable = (f"[bold red]Beginning next subnet scan in:[/bold red][bold green] {timer}[/bold green]") 
+
+        
+live_timer()
+
 
 

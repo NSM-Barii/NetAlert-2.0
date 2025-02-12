@@ -210,7 +210,10 @@ class utilities():
             
             else:
                 # FALL BACK TO GETTING MAC FROM PYTHON LIBARY // IN CASE OF RATE LIMITING ESPICIALLY
-                vendor = manuf.MacParser().get_manuf_long(mac)
+                vendor = manuf.MacParser().get_manuf_long(mac) 
+                
+                vendor = vendor if vendor else "N/A"
+
                 return vendor
       
         

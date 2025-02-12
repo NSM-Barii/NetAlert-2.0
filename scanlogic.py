@@ -27,12 +27,9 @@ from plyer import notification
 # FILE SETTINGS
 from pathlib import Path
 
-# Determine where the program is running from (script or bundled executable)
-if getattr(sys, 'frozen', False):  # Running as an executable
-    base_dir = Path(sys._MEIPASS)  # Get the path for bundled resources
-else:  # Running as a Python script
-    base_dir = Path.home() / "Documents" / ".NetAlert2"
 
+# CREATE FILE DIRECTORY
+base_dir = Path.home() / "Documents" / "NSM Tools" /".data" / "NetAlert2"
 base_dir.mkdir(parents=True, exist_ok=True)
 
 
@@ -61,9 +58,11 @@ class arp_scanner():
         # LOGIC FOR DEFAULT SUBNET
         from user_settings import user_settings
         data = user_settings().load_file()
-        default_subnet = data["subnet_address"]
 
         
+        default_subnet = data["subnet_address"]
+  
+            
         if default_subnet:
             option = f"( or Press Enter for {default_subnet} )"
 
@@ -201,7 +200,6 @@ class white_list():
     def device_list(self):
     
         # LOAD DEVICES
-        print("heyy")
         devices = self.data.load_file(type=1)
 
         # CREATE A EMPTY LIST FOR STORING IPS, DEFINE WHITE LIST FOR USER INPUT AND CHOICES SO USER CANT REPEAT THE SAME INPUT
@@ -452,7 +450,7 @@ class file_handling():
             try:
                 with open(file_path, "r") as file:
                     content = json.load(file)
-                    console.print("File found")
+                   # console.print("File found")
                     return content
                 
             except FileNotFoundError:

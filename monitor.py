@@ -17,7 +17,7 @@ import pyfiglet
 import socket
 import time
 from datetime import datetime
-import requests, json, sys, subprocess
+import requests, json, sys, subprocess, random, threading
 
 
 
@@ -41,7 +41,6 @@ class monitor_mode():
 
         if  device_info ==  None:
            console.print("[bold red]No white list found,[/bold red] [yellow]Returning you to the main menu where u can create one!!![/yellow]")
-           time.sleep(1.5)
            subprocess.run([sys.executable, "main.py"])  # Restart the script
 
 
@@ -117,7 +116,7 @@ class monitor_mode():
                     load["subnet_address"] = valid_subnet
                     data.save_data(changed_data=load)
 
-                    console.print(f"[bold green]IP Subnet:{valid_subnet}  Successfully Updated![/bold green]\n\n")
+                    console.print(f"[bold green]Default IP Subnet: {valid_subnet}  Successfully Updated![/bold green]\n\n")
                     time.sleep(1.8)
                     break
 
@@ -201,21 +200,26 @@ class monitor_mode():
                     
                     # GET HOST NAME
                     ip = ip.strip()
+                   # with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s
                     try:
-                        host = socket.gethostbyaddr(ip)[0].split('.')[0]
                         
-                    
+                        host = socket.gethostbyaddr(ip)[0].split('.')[0]
      
                     except (socket.herror, socket.gaierror):
-                        host = "unknown"
+                        host = "N/A"
 
                     except Exception as e:
-                        host = "unknown"
+                        host = "N/A"
                     
 
                     # FOR ROUTER
                     if ip == "192.168.1.1":
-                        host = "Router"
+                        host = "Gateway"
+                    
+                    # FOR PLAYSTATIONS
+                    if "sony" in vendor or "Sony" in vendor and host == "N/A":
+                        host = "Playstation"
+            
 
                     # REDIFNE THE VARIABLE // GET RID OF WHITE SPACES
                     device = f"{ip} / {mac}"
@@ -239,7 +243,7 @@ class monitor_mode():
                         
                         
                         # ADD UNATHORIZED DEVICE TO LIST
-                        device = f"Vendor: {vendor} - host: -{host} - IP: {ip} - MAC: {mac}"
+                        device = f"Vendor: {vendor} | host: {host} | IP: {ip} | MAC: {mac}"
                         unauthorized_devices.append(device)
 
 
@@ -277,7 +281,7 @@ class monitor_mode():
 
             
            # timestamp = datetime().strftime("%d/%m/%Y - %H:%M:%S")
-            content = '\n'.join(unauthorized_devices)
+            content = '\n\n'.join(unauthorized_devices)
             payload = {"content":  f"\nWarning {num} Unauthorized Devices Found on your Network!!!\n\n{content}\n\nDo you want to DOS unathorized users?"}
             
 
@@ -287,9 +291,9 @@ class monitor_mode():
 
                 # CHECK STATUS CODE TO MAKE SURE IT WAS SENT SUCCESSFULLY
                 if send.status_code == 204:
-                    console.print("\nUser Successfully Notified", style="bold green")
+                    console.print("User Successfully Notified", style="bold green")
                 else:
-                    console.print("\nFailed to notify user about unathorized devices found on network", style="bold red")
+                    console.print("Failed to notify user about unathorized devices found on network", style="bold red")
             
 
         # PRINT FINAL MESSAGE WITH SCAN RESULTS
@@ -332,9 +336,9 @@ class monitor_mode():
             warn = f"0 unauthorized devices found, Network safely Secured"   
 
 
-        utilities().tts("ATTENTION!")
-        time.sleep(0.4)
-        utilities().tts(warn)
+        threading.Thread(target=utilities().tts("ATTENTION!")).start()
+        time.sleep(0.2)
+        threading.Thread(target=utilities().tts(warn)).start()
                     
 
         # NOTIFY USER OF SCAN
@@ -358,6 +362,15 @@ class monitor_mode():
         noty_user = utilities()
         noty_user.noty(msg)  
 
+        # KEEP TRACK OF THE AMOUNT OF MONITOR MODE SCANS COMPLETED // PLACE THIS AT THE END IN CASE OF FAILURE FROM TOP TO BOTTOM
+        data = user_settings()
+        load = data.load_file()
+        times = load['monitor_mode_scans']
+        times += 1
+        load["monitor_mode_scans"] = times
+        data.save_data(changed_data=load)
+        
+
 
     def main(self):
         """In charge of looping through monitor mode"""
@@ -375,6 +388,9 @@ class monitor_mode():
         # GET SUBNET
         subnet = content["subnet_address"]
 
+        # GET TOTAL MM SCANS COMPLETED
+        times = content["monitor_mode_scans"]
+
         print("\n\n")
         scan_interval = interval * 60
 
@@ -384,16 +400,42 @@ class monitor_mode():
 
                 # CREATE TIMESTAMPS
                 timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                
-                console.print(f"\n\n[bold blue]TimeStamp:[/bold blue] {timestamp}")
+
+                # UPDATE TIMES VALUE EACH ITERATION
+                content = main.load_file()
+                times = content["monitor_mode_scans"]
+
+                # VALUES
+                console.print(f"\n\n[bold blue]Scans Completed:[/bold blue] [bold green]{times}[/bold green]")
+                console.print(f"[bold blue]TimeStamp:[/bold blue] {timestamp}")
                 console.print(f"[bold blue]Subnet: [/bold blue] [bold green]{subnet}[/bold green]")
                 console.print(f"[bold blue]Scan Interval:[/bold blue] [bold green]{interval} Minutes[/bold green]\n\n")
+                
                 self.monitor()
                 print("\n\n")
+       
+               
+               # WANT TO MAKE TIMER COUNTDOWN IN SEPERATE THREAD SO U CAN SCOLL THROUGH CMD FREELY !!!
+               # def live_timer():
 
-                for i in range(interval * 60,0,-1):
-                    print(f"Beginning next Subnet Scan in: {i} Seconds", end='\r', flush=True)     
-                    time.sleep(1)
+                     
+                timer = interval * 60
+                panel_t = Panel(f"[bold red]Beginning next subnet scan in:[/bold red][bold green] {timer}[/bold green]        ",
+                                border_style="bold red",
+                                expand=False
+                                #width=min(130, console_width - 2)
+                                ) 
+
+                with Live(panel_t, console=console, refresh_per_second=10):
+                    while timer > 0:
+                    
+                        timer -= 1
+                        time.sleep(1)
+                        panel_t.renderable = f"[bold red]Beginning next subnet scan in:[/bold red][bold green] {timer}[/bold green]"
+                
+                            
+
+           
 
 
             except KeyboardInterrupt as e:
