@@ -212,6 +212,8 @@ class monitor_mode():
                         host = "N/A"
                     
 
+                    # WILL GO MORE INTO DEPTH WITH THIS SOON 
+
                     # FOR ROUTER
                     if ip == "192.168.1.1":
                         host = "Gateway"
