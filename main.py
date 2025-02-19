@@ -36,8 +36,6 @@ if __name__ == "__main__":
         while True:
             main.welcome()
             online_status.connection_check()
-            #t = threading.Thread(target=)
-        # t.start()
             main.user_choose()
             utilities.clear_screen()
             

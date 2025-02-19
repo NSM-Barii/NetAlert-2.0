@@ -203,7 +203,7 @@ class get_ip_subnet():
 
         packet = Ether(dst="ff:ff:ff:ff:ff:ff") / ARP(pdst=ip)
 
-        result = srp(packet, timeout=5, verbose=False)[0]
+        result = srp(packet, timeout=2, verbose=False)[0]
 
         for sent, recieved in result:
 
@@ -216,10 +216,10 @@ class get_ip_subnet():
                 host = socket.gethostbyaddr(ip)[0]
             
             except socket.gaierror:
-                host = "unkown"
+                host = "N/A"
 
             except Exception:
-                host = "unkown"
+                host = "N/A"
             
             # TRY AND GET VENDOR
             finally:
@@ -248,12 +248,18 @@ class get_ip_subnet():
                 return response.text.strip()
 
             else:
-                vendor = manuf.MacParser(update=True).get_manuf_long(mac)
+                vendor = utilities.get_vendor(mac)
+                vendor = vendor if vendor else "N/A"
                 return vendor
+                
+               
+                
         
         except requests.RequestException as e:
-            console.print(mac)
-            return "unknown"
+            vendor = utilities.get_vendor(mac)
+            vendor = vendor if vendor else "N/A"
+            return vendor
+    
         
 
 
@@ -285,10 +291,9 @@ class get_ip_subnet():
             #print(f"Launching scan on: {ip}")
 
         for thread in threads:
-            print(f"Starting Thread #{t_a} on: {ip}", end='\r', flush=True)
+            #print(f"Starting Thread #{t_a} on: {ip}", end='\r', flush=True)
             t_a += 1
             
-
             thread.start()
 
         for thread in threads:
@@ -311,7 +316,7 @@ class get_ip_subnet():
             threading.Thread(target=results).start()
             
             # PRINT TO OUTPUT
-            console.print(f"[bold green]Total Devices found:[/bold green] [bold red]{self.active_ip_count} seconds[/bold red]")
+            console.print(f"[bold green]Total Devices found:[/bold green] [bold red]{self.active_ip_count}[/bold red]")
             console.print(f"[bold green]Subnet Scan Completed in:[/bold green] [bold red]{elapsed_time:.2f}[/bold red]")
         
     
@@ -326,7 +331,7 @@ class get_ip_subnet():
 
 
 
-start = 2
+start = 1
 
 if __name__ == "__main__":
     
@@ -335,25 +340,8 @@ if __name__ == "__main__":
         nsm.threader()
 
 
-console_width = console.size.width
+        input("\n\nEnter to exit")
 
-interval = .5
-
-def live_timer():
-    timer = interval * 60
-    panel_t = Panel(f"[bold red]Beginning next subnet scan in:[/bold red][bold green] {timer}[/bold green]",
-                    border_style="bold red",
-                    width=min(130, console_width - 2)
-                    ) 
-    
-    with Live(panel_t, console=console, refresh_per_second=10):
-        while timer > 0:
-            timer -= 1
-            time.sleep(1)
-            panel_t.renderable = (f"[bold red]Beginning next subnet scan in:[/bold red][bold green] {timer}[/bold green]") 
-
-        
-live_timer()
 
 
 
