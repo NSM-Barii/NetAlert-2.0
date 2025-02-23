@@ -386,7 +386,7 @@ class Logging:
 
                 with open(self.file_log, "a") as file:
                     file.write(log_format)
-                    console.print("\n[bold green]Successfully logged[/bold green] [bold red]Intrusion![/bold red]")
+                    console.print("[bold green]Successfully logged[/bold green] [bold red]Intrusion![/bold red]")
                     break
             
             except FileNotFoundError as e:

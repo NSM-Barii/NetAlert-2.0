@@ -273,6 +273,7 @@ class monitor_mode():
             intrusion_update = ns["intrusion_updates"]
 
             kick = utilities()
+            
 
             
             try:
@@ -284,11 +285,37 @@ class monitor_mode():
                     ip = device.split('|')[2].split(':')[1].strip()
                     mac = device.split('|')[3].partition(':')[2].strip()
                     
+                   
+                    console.print(f"Currently On device: {ip} | {mac}")
 
-                    console.print(f"On device: {ip}:{mac}")
+                    # LOG INTRUSION  
+                    color_out = "bold cyan"  # Adjusted for better contrast  
+                    log_format = (  
+                        "[bold red][INTRUSION DETECTED][/bold red] - "  
+                        f"[bold white]IP:[/bold white] [bold cyan]{ip}[/bold cyan] | "  
+                        f"[bold white]MAC:[/bold white] [bold yellow]{mac}[/bold yellow] | "  
+                        f"[bold white]Vendor:[/bold white] [bold magenta]{vendor}[/bold magenta] | "  
+                        f"[bold white]Host:[/bold white] [bold green]{host}[/bold green]"  
+                    )  
+                    Logging().log_results_write(log=log_format)
+                    
 
-                    kick.unauthorized_handler(ip, mac)
-                    #data[num] = f"Unathorized Device: {device}"
+                    # FOR SPACE  // PROOF THAT I DONT EVEN NEED THE NUM VARIABLE LOL 
+                    if num != len(unauthorized_devices):
+                        print("")
+    
+ 
+                    type = 1
+                    
+                    # FOR DIRECTLY INTERACTING WITH LOCAL ROUTER
+                    if type == 1:
+                        kick.kick_blacklist(vendor, host, ip, mac)
+                    
+                    # FOR ARP POISONING ATTACK
+                    if type == 2:
+                        kick.kick_arp(ip, mac)
+
+
                     num += 1
 
                     
