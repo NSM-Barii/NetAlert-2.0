@@ -285,27 +285,10 @@ class monitor_mode():
                     mac = device.split('|')[3].partition(':')[2].strip()
                     
 
-                    # APPEND INFO TO INTRUSION LOG
-                    log = (
-                        f"[bold red][INTRUSION DETECTED] - Unauthorized device found[/bold red] "  
-                        f"IP: {ip} | MAC: {mac} | Vendor: {vendor} | Host: {host} "
-                    )
+                    console.print(f"On device: {ip}:{mac}")
 
-                    
-                    console.print(f"Currently on device: {ip} | {mac}")
-                    Logging().log_results_write(log)
-
-                    
-                    type = 1
-                    
-                    # FOR CONNECTING DIRECTLY TO THE ROUTER
-                    if type == 1:
-                        utilities().kick_blacklist(vendor, host, ip, mac)
-                    
-                    # FOR PERFORMING A PACKET MANIPULATION ATTACK
-                    elif type == 2:
-                        utilities().kick_arp(ip, mac)
-        
+                    kick.unauthorized_handler(ip, mac)
+                    #data[num] = f"Unathorized Device: {device}"
                     num += 1
 
                     
