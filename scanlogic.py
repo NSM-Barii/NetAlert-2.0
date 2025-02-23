@@ -4,6 +4,8 @@
 # IMPORTS FOR OTHER PROGRAM MODULES
 from monitor import monitor_mode
 from user_settings import settings_menu
+from threaded_common_portscan import get_ip_subnet
+from extra_features import Logging 
 
 
 # NETWORK IMPORTS
@@ -499,11 +501,12 @@ class user_interface():
     
         panel_choices = Panel(
                               "1. Monitor Mode\n\n"
-                              "2. Perform ARP Scan\n\n"
+                              "2. Perform Network Scan\n\n"
                               "3. View White List\n"
                               "4. Create new White list\n\n"
-                              "5. Settings\n\n"
-                              "6. Exit", 
+                              "5. Logging\n"
+                              "6. Settings\n\n"
+                              "7. Exit", 
                               
                               style="green", border_style="bold green", width=min(130, console_width - 2))
         
@@ -529,8 +532,10 @@ class user_interface():
             # PERFORM A REGULAR ARP SCAN
             elif choice == "2":
                 self.exe.clear_screen()
-                begin = arp_scanner().main()
-                begin
+                #begin = arp_scanner().main()
+                #begin
+
+                get_ip_subnet(scan_ports=True).threader()
                 
                 console.input("\n[bold red]Press enter to return to main menu: [/bold red]")
                 break
@@ -562,7 +567,7 @@ class user_interface():
 
                     elif confirm_choice == "n":
                         console.print("\nReturning to main menu!", style="bold blue")
-                        time.sleep(1.5)
+                        time.sleep(.75)
                         self.exe.clear_screen
                         break
                     
@@ -572,23 +577,35 @@ class user_interface():
                 break
             
             
-            # SETTINGS MENU
             elif choice == "5":
+                self.exe.clear_screen()
+                Logging().log_results_read()
+
+                console.input("\n\n\n[bold red]Press Enter to Exit: [/bold red]")
+                break
+                
+                
+
+            
+            # SETTINGS MENU
+            elif choice == "6":
               # REDIRECT TO SETTINGS MODULE
                 settings = settings_menu()
                 settings.settings()
                 self.exe.clear_screen()
                 break
 
+
+
             
             # TO EXIT PROGRAM
-            elif choice == "6":
+            elif choice == "7":
                 exit()            # NOT RECOMMENDED WILL BE CHANGING THIS B4 EXE VERSION IS RELEASED
 
 
             
             else:
-                console.print("\n[yellow]Please choose a valid option[/yellow] [bold green](1-6)[/bold green]")
+                console.print("\n[yellow]Please choose a valid option[/yellow] [bold green](1-7)[/bold green]")
 
 
 # STRICTLY FOR MODULE TESTING

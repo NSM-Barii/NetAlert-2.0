@@ -264,6 +264,7 @@ class monitor_mode():
 
             # GET DISCORD WEBHOOK
             from user_settings import user_settings
+            from extra_features import Logging
             
             
             ns = user_settings().load_file()
@@ -277,15 +278,36 @@ class monitor_mode():
             try:
                 for device in unauthorized_devices:
 
+                    # PARSE FOR DEVICE INFO
+                    vendor = device.split('|')[0].split(':')[1].strip()
+                    host = device.split('|')[1].split(':')[1].strip()
                     ip = device.split('|')[2].split(':')[1].strip()
                     mac = device.split('|')[3].partition(':')[2].strip()
+                    
 
+                    # APPEND INFO TO INTRUSION LOG
+                    log = (
+                        f"[bold red][INTRUSION DETECTED] - Unauthorized device found[/bold red] "  
+                        f"IP: {ip} | MAC: {mac} | Vendor: {vendor} | Host: {host} "
+                    )
 
-                    console.print(f"On device: {ip}:{mac}")
+                    Logging().log_results_write(log)
 
-                    kick.unauthorized_handler(ip, mac)
-                    #data[num] = f"Unathorized Device: {device}"
+                    console.print(f"Currently on device: {ip} | {mac}")
+
+                    type = 1
+                    
+                    # FOR CONNECTING DIRECTLY TO THE ROUTER
+                    if type == 1:
+                        utilities().kick_blacklist(vendor, host, ip, mac)
+                    
+                    # FOR PERFORMING A PACKET MANIPULATION ATTACK
+                    elif type == 2:
+                        utilities().kick_arp(ip, mac)
+        
                     num += 1
+
+                    
             
             except Exception as e:
                 console.print(f"{e}: {ip}")
@@ -305,9 +327,9 @@ class monitor_mode():
 
                 # CHECK STATUS CODE TO MAKE SURE IT WAS SENT SUCCESSFULLY
                 if send.status_code == 204:
-                    console.print("User Successfully Notified", style="bold green")
+                    console.print("\nUser Successfully Notified", style="bold green")
                 else:
-                    console.print("Failed to notify user about unathorized devices found on network", style="bold red")
+                    console.print("\nFailed to notify user about unathorized devices found on network", style="bold red")
             
 
         # PRINT FINAL MESSAGE WITH SCAN RESULTS
