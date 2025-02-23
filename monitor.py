@@ -291,10 +291,11 @@ class monitor_mode():
                         f"IP: {ip} | MAC: {mac} | Vendor: {vendor} | Host: {host} "
                     )
 
+                    
+                    console.print(f"Currently on device: {ip} | {mac}")
                     Logging().log_results_write(log)
 
-                    console.print(f"Currently on device: {ip} | {mac}")
-
+                    
                     type = 1
                     
                     # FOR CONNECTING DIRECTLY TO THE ROUTER
