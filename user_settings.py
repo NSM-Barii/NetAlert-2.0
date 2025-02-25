@@ -22,7 +22,7 @@ import json, os, time, requests
 # FILE PATH
 from pathlib import Path
 
-base_dir = Path.home() / "Documents" / "NSM Tools" / ".data" / "NetAlert2"
+base_dir = Path.home() / "Documents" / "NSM Tools" / ".data" / "NetAlert2" / "settings"
 base_dir.mkdir(parents=True, exist_ok=True)
 
 

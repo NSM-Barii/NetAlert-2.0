@@ -433,31 +433,152 @@ if __name__ == "__main__":
 
     
 
-from datetime import datetime
+        from datetime import datetime
 
-now = datetime.now()
+        now = datetime.now()
 
-time_stamp = now.strftime("%Y-%m-%d  %H:%M:%S")
+        time_stamp = now.strftime("%Y-%m-%d  %H:%M:%S")
 
-console.print(time_stamp)
-
-
-
-table = Table(title="Testing", border_style="green", header_style="bold red")
-table.add_column("Key", style="green")
-table.add_column("Value", style="red")
-
-import random
-
-txt = random.randbytes(10)
+        console.print(time_stamp)
 
 
 
+        table = Table(title="Testing", border_style="green", header_style="bold red")
+        table.add_column("Key", style="green")
+        table.add_column("Value", style="red")
 
-with Live(table, console=console, refresh_per_second=4):
-    for i in range(1000):
-        tr = ["INTRUSION DETECTED", "DEVICE BLACKLISTED", "NEW WHITELIST CREATED", f"SCAN INTERVAL UPDATED TO {i}"]
-        num = random.randint(0,3)
-        txt = random.randbytes(8)
-        ip = random.randint(0,255)
-        table.add_row(f"{tr[num]}", f"IP: {ip} | MAC: {txt}")
+        import random
+
+        txt = random.randbytes(10)
+
+
+
+
+        with Live(table, console=console, refresh_per_second=4):
+            for i in range(1000):
+                tr = ["INTRUSION DETECTED", "DEVICE BLACKLISTED", "NEW WHITELIST CREATED", f"SCAN INTERVAL UPDATED TO {i}"]
+                num = random.randint(0,3)
+                txt = random.randbytes(8)
+                ip = random.randint(0,255)
+                table.add_row(f"{tr[num]}", f"IP: {ip} | MAC: {txt}")
+
+
+import pyttsx3
+
+class packet_rate_limiting():
+    """This class will be responsible for keep tracking off the amount of packets being sent by each device within the subnet"""
+
+    def __init__(self):
+        self.watch_list = []
+        pass
+    
+
+    def packet_limiting(self, ip: str, rate_limit):
+        """Keep track of packets for ip param"""
+
+        def limiter(pkt):
+            """This will be triggered upon rate limit hit"""
+
+        # console.print(f"[bold red]Rate Limiting Triggered:[/bold red] {ip} [yellow]has sent over 1,000 packets in the last minute[/yellow]")
+            console.print(pkt)
+
+        # CHECK TO MAKE SURE DEVICE ISNT ALREADY ON THE WATCHLIST
+        
+        console.print(self.watch_list)
+        listed = any(ip in device for device in self.watch_list)
+
+        if listed == False:
+
+            # NOW TO APPEND IP TO WATCHLIST
+            self.watch_list.append(ip)
+            console.print(f"Now starting Rate limiting on: {ip} with a limit of: {rate_limit} packets")
+        
+
+            while True:
+                try:
+                     
+                    count_down = time.time()
+                    sniff(filter=f"host {ip}",prn=limiter, store=0, count=rate_limit)
+
+                    count_down_done = time.time() - count_down
+
+                    if count_down_done < 60:
+                        console.print(f"[bold red]Rate Limiting Triggered:[/bold red] {ip} [yellow]has sent over {rate_limit} packets in the last minute[/yellow]")
+                    
+                        # TESTING PURPOSES WILL CLEAN THIS SCRIPT UP SOON
+                        
+
+                        end = ip.split('.')[3]
+
+                        #name = random.randint(1, end)
+                        user_id = f"engine_{end}"
+                        console.print(user_id)
+                        user_id = pyttsx3.init()
+                        
+                        rate = user_id.getProperty('rate')
+
+                        user_id.setProperty('rate', 160)
+
+                        voices = user_id.getProperty('voices')
+                        user_id.setProperty('voice', voices[1].id)
+                        user_id.say("RATE LIMITING TRIGGERED")
+                        user_id.runAndWait()
+                    
+
+
+                    else:
+                        console.print(f"[bold green]Device:[/bold green] {ip}[yellow] has passed the check[/yellow]")
+            
+                except Exception as e:
+                    console.print(e)
+ 
+
+
+        # FOR TESTING PURPOSES TO MAKE SURE THIS IS WORKING
+        else:
+            console.print(f"Device: {ip} is already inside of the watchlist")
+
+#packet_rate_limiting().packet_limiting(ip="192.168.1.133", rate_limit=50)
+
+
+
+def light():
+    ip = "192.168.1.92"
+    rate = 180
+    packet_limiting(ip, rate)
+
+
+    import asyncio
+    from kasa import SmartBulb
+
+    async def control_bulb():
+        bulb = SmartBulb("192.168.1.70")
+        await bulb.update()  # This needs to be inside an async function
+        print(bulb.alias)  # Check if it responds
+        # Example action
+        
+        await bulb.wifi_scan()
+
+        
+
+        await bulb.turn_off()
+        time.sleep(1)
+        await bulb.turn_on()
+
+
+    # Run the async function properly
+    #asyncio.run(control_bulb())
+    console.print("howdy")
+
+
+
+    cmd = {"smartlife.iot.smartbulb.lightingservice":{"transition_light_state":{"on_off":0,"ignore_default":1}}}
+
+
+
+
+
+
+
+
+

@@ -20,6 +20,7 @@ from plyer import notification
 import pyttsx3, threading
 from pathlib import Path
 from datetime import datetime
+import openai, random, pyttsx3
 
 
 # NETWORK IMPORTS
@@ -176,11 +177,16 @@ class utilities():
         
         voices = engine.getProperty('voices')
         rate = engine.getProperty('rate')
-       # pitch = engine.getProperty('pitch')
+
+        # SET VOLUME
+       # volume = engine.getProperty('volume')
+        
+       
         
         try:
+           # engine.setProperty('volume', 20)
             engine.setProperty('rate', rate -20)
-           # engine.setProperty('pitch', pitch + 10) 
+           
         except Exception as e:
             console.print(e)
   
@@ -307,22 +313,26 @@ class utilities():
     
     def kick_blacklist(self, vendor: str, host: str, ip: str, mac: str):
         """This method will be using // communicating directly with your local router"""
+        
+        try:
+            if host == "N/A" and vendor == "Not availiable":
+                option = f"with a ip address of: {ip}"
+            
+            elif host == "N/A":
+                option = f"with a vendor from: {vendor}"
+            
+            else:
+                option = f"with a hostname of: {host}"
 
-        if host == "N/A" and vendor == "Not availiable":
-            option = f"with a ip address of: {ip}"
+            
+            letter = f"Successfully blacklisted a device, {option}"
+            utilities().tts(letter)
         
-        elif host == "N/A":
-            option = f"with a vendor from: {vendor}"
-        
-        else:
-            option = f"with a hostname of: {host}"
-
-        
-        letter = f"Successfully blacklisted a device, {option}"
-        utilities().tts(letter)
+        except Exception as e:
+            console.print(e)
 
     
-
+# TEST CLASS // ONLY USED AS A OBJECT TO BE CALLED UPON FROM WITHIN THE UTILITIES CLASS INSIDE THE UNAUTHORIZED DEVICE HANDLER
 class dhcp_capture():
     """Responsible for listening and capturing dhcp packets"""
 
@@ -353,8 +363,6 @@ class dhcp_capture():
         console.print("[bold red]END[/bold red]")
 
 
-
-    
 class Logging:
     """This class holds and stores any and all intrusions // detailed information on intrusions"""
 
@@ -362,7 +370,7 @@ class Logging:
     def __init__(self):
 
         # CREATE BASE DIRECTORY
-        base_dir = Path.home() / "Documents" / "nsm tools" / ".data" / "NetAlert2"
+        base_dir = Path.home() / "Documents" / "nsm tools" / ".data" / "NetAlert2" / "Intrusion_logging"
         base_dir.mkdir(parents=True, exist_ok=True)
         
         # CREATE METHOD FILE PATH // FOR LOG SAVING
@@ -375,7 +383,7 @@ class Logging:
         # LOOP SO THAT WAY FILE CAN BE CREATED AND RETRIED!!!
         while True:
 
-            # CREATE TIMESTAMP FOR ACCURATE / DETAILED LOGGING
+            # CREATE TIMESTAMP FOR ACCURATE // DETAILED LOGGING
             now = datetime.now()
             time_stamp = now.strftime("%Y-%m-%d %H:%M:%S")
 
@@ -421,12 +429,35 @@ class Logging:
                 console.input("\n\n[bold red]Press enter to exit: [/bold red]")
                 break      
 
+
+
+
+class open_ai_intergration():
+    """Will be using ai within this class"""
+
+    def __init__(self):
+        pass
+    
+
+    def start(self, prompt):
+        """AI Responses"""
+        
+        try:
+            openai.api_key = ("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")
+
+            # CREATE THE PROMPT NOW 
+            response = openai.completions.create(
+                model= 'gpt-3.5-turbo-instruct',
+                prompt= prompt,
+                max_tokens=150
+            )
             
-
-
-
-
-
+            # NOW TO RETURN AI'S RESPONSE
+            return response.choices[0].text.strip()
+        
+        except Exception as e:
+            console.print(e)
+ 
 def main():
     import threading
     t = threading.Thread(target=utilities().tts("testing"))
@@ -440,8 +471,11 @@ def main():
 
 
 if __name__ == "__main__":
-   while True:
+   #while True:
    # start = utilities().tts(letter="Warning!!! 3 Unauthorized devices found on your network. Sending details to your phone.")
-     main()
-     console.print("toes are white")
+    # main()
+    # console.print("toes are white")
 
+
+
+    open_ai_intergration().start(prompt="how are you doing")

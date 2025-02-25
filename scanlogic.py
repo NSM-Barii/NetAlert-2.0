@@ -31,7 +31,7 @@ from pathlib import Path
 
 
 # CREATE FILE DIRECTORY
-base_dir = Path.home() / "Documents" / "NSM Tools" /".data" / "NetAlert2"
+base_dir = Path.home() / "Documents" / "NSM Tools" /".data" / "NetAlert2" / "devices"
 base_dir.mkdir(parents=True, exist_ok=True)
 
 

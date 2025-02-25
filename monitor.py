@@ -27,8 +27,10 @@ class monitor_mode():
     
 
     def __init__(self):
+        import packet_inspection
         self.white_list = []
         self.total_devices_in_whitelist = 0
+        self.rate_limiter = packet_inspection.packet_rate_limiting()
 
     def get_white_list(self):
         """Responsible for getting white list"""
@@ -298,13 +300,13 @@ class monitor_mode():
                         f"[bold white]Host:[/bold white] [bold green]{host}[/bold green]"  
                     )  
                     Logging().log_results_write(log=log_format)
-                    
 
-                    # FOR SPACE  // PROOF THAT I DONT EVEN NEED THE NUM VARIABLE LOL 
-                    if num != len(unauthorized_devices):
-                        print("")
-    
- 
+                    
+                    # NOW TO RATE LIMIT THE DEVICE // MONITOR AND RECORD PACKETS
+                    rate = 50
+                    threading.Thread(target=self.rate_limiter.packet_limiting, args=(ip, rate), daemon=True).start()
+
+                    
                     type = 1
                     
                     # FOR DIRECTLY INTERACTING WITH LOCAL ROUTER
@@ -312,12 +314,17 @@ class monitor_mode():
                         kick.kick_blacklist(vendor, host, ip, mac)
                     
                     # FOR ARP POISONING ATTACK
-                    if type == 2:
+                    elif type == 2:
                         kick.kick_arp(ip, mac)
-
 
                     num += 1
 
+                    # FOR SPACE  // PROOF THAT I DONT EVEN NEED THE NUM VARIABLE LOL 
+                    if num != len(unauthorized_devices):
+                        print("")
+                    
+                    else:
+                        console.print(f"Current devices under supervision: {self.rate_limiter.watch_list}")
                     
             
             except Exception as e:
