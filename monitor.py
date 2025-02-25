@@ -324,7 +324,7 @@ class monitor_mode():
                         print("")
                     
                     else:
-                        console.print(f"Current devices under supervision: {self.rate_limiter.watch_list}")
+                        console.print(f"\n\nCurrent devices under Network Supervision: {self.rate_limiter.watch_list}")
                     
             
             except Exception as e:

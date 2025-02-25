@@ -545,7 +545,7 @@ class packet_rate_limiting():
 def light():
     ip = "192.168.1.92"
     rate = 180
-    packet_limiting(ip, rate)
+ 
 
 
     import asyncio
