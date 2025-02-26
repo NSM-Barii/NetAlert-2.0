@@ -443,7 +443,7 @@ class open_ai_intergration():
         """AI Responses"""
         
         try:
-            openai.api_key = ("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")
+            openai.api_key = ("")
 
             # CREATE THE PROMPT NOW 
             response = openai.completions.create(
