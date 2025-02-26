@@ -65,7 +65,32 @@ class packet_rate_limiting():
             # NOW TO APPEND IP TO WATCHLIST
             self.watch_list.append(ip)
             console.print(f"Now starting Rate limiting on: {ip} with a limit of: {rate_limit} packets")
-        
+
+
+            # TESTING PURPOSES WILL CLEAN THIS SCRIPT UP SOON
+            user_id = f"engine_{ip.split('.')[3]}"
+
+            n = {}
+
+            engine = pyttsx3.init()
+            n[ip] = engine
+            console.print(user_id)
+            console.print(engine)
+            console.print(n)
+       
+          
+            user_id.setProperty('rate', 160)
+            voices = user_id.getProperty('voices')
+            
+
+            # CHECK IF THE USER HAS MORE THEN 1 TTS VOICE IF NOT DEFAULT TO ELSE STATEMENT
+            if len(voices) > 1:
+
+                engine.setProperty('voice', voices[1].id)
+            
+            else:
+                engine.setProperty('voice', voices[0].id)
+
 
             while True:
                 try:
@@ -78,24 +103,9 @@ class packet_rate_limiting():
                     if count_down_done < 60:
                         console.print(f"[bold red]Rate Limiting Triggered:[/bold red] {ip} [yellow]has sent over {rate_limit} packets in the last minute[/yellow]")
                     
-                        # TESTING PURPOSES WILL CLEAN THIS SCRIPT UP SOON
-                        
 
-                        end = ip.split('.')[3]
-
-                        #name = random.randint(1, end)
-                        user_id = f"engine_{end}"
-                        console.print(user_id)
-                        user_id = pyttsx3.init()
-                        
-                        rate = user_id.getProperty('rate')
-
-                        user_id.setProperty('rate', 160)
-
-                        voices = user_id.getProperty('voices')
-                        user_id.setProperty('voice', voices[1].id)
-                        user_id.say("RATE LIMITING TRIGGERED")
-                        user_id.runAndWait()
+                        engine.say("RATE LIMITING TRIGGERED")
+                        engine.runAndWait()
                     
 
 
@@ -145,6 +155,7 @@ class packet_rate_limiting():
 
 # ONLY FOR MODULE TESTING
 if __name__ == "__main__":
+
 
     ip = "192.168.1.1"
     rate_limit = 50
