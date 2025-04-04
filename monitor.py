@@ -27,9 +27,11 @@ class monitor_mode():
     
 
     def __init__(self):
-        import packet_inspection
+        import packet_inspection, extra_features
+        self.lock = threading.Lock()
         self.white_list = []
         self.total_devices_in_whitelist = 0
+        self.noty_counter = extra_features.utilities()
         self.rate_limiter = packet_inspection.packet_rate_limiting()
 
     def get_white_list(self):
@@ -303,13 +305,12 @@ class monitor_mode():
 
                     
                     # NOW TO RATE LIMIT THE DEVICE // MONITOR AND RECORD PACKETS
-                    rate = 50
-                    threading.Thread(target=self.rate_limiter.packet_limiting, args=(ip, rate), daemon=True).start()
+                    threading.Thread(target=self.rate_limiter.packet_limiting, args=(ip, console, vendor, host, mac, self.lock), daemon=True).start()
 
                     
                     type = 1
                     
-                    # FOR DIRECTLY INTERACTING WITH LOCAL ROUTER
+                    # FOR DIRECTLY INTERACTING WITH LOCAL ROUTER // STILL IN TESTING PHASE MAIN LOGIC IN ROUTER_CONTROLLER MODUEL
                     if type == 1:
                         kick.kick_blacklist(vendor, host, ip, mac)
                     
@@ -348,7 +349,7 @@ class monitor_mode():
                     console.print("\nUser Successfully Notified", style="bold green")
                 else:
                     console.print("\nFailed to notify user about unathorized devices found on network", style="bold red")
-            
+        
 
         # PRINT FINAL MESSAGE WITH SCAN RESULTS
         total_found = online_devices + offline_devices
@@ -372,9 +373,9 @@ class monitor_mode():
         
         # IMPORT OTHER MODULES FOR MORE FEATURES
         from extra_features import utilities
+        
 
-
-
+           
         # NOTIFY VOICE ASSISTANT
         
         # PLURAL
@@ -389,10 +390,13 @@ class monitor_mode():
         else:
             warn = f"0 unauthorized devices found, Network safely Secured"   
 
+    
 
-        utilities().tts("ATTENTION!")
-        time.sleep(0.2)
-        threading.Thread(target=utilities().tts, args=(warn,)).start()
+        with self.lock:
+            utilities().tts("ATTENTION!")
+            time.sleep(0.2)
+   
+            threading.Thread(target=utilities().tts, args=(warn,)).start()
                     
 
         # NOTIFY USER OF SCAN
@@ -411,18 +415,19 @@ class monitor_mode():
                 f"Congratulations, your network is secure!"
             )
 
+        # IN CHARGE OF KEEPING TRACK OF THE AMOUNT OF NOTIFICATIONS THAT WERE SENT // MEANT TO LIMIT OVERLOADING CONSOLE WITH NOTIFICATIONS
+        send = self.noty_counter.noty_count()
+        
 
         # SEND NOTIFICATION
-        noty_user = utilities()
-        noty_user.noty(msg)  
+        if send:     
+            noty_user = utilities()
+            noty_user.noty(msg)  
 
         # KEEP TRACK OF THE AMOUNT OF MONITOR MODE SCANS COMPLETED // PLACE THIS AT THE END IN CASE OF FAILURE FROM TOP TO BOTTOM
-        data = user_settings()
-        load = data.load_file()
-        times = load['monitor_mode_scans']
-        times += 1
-        load["monitor_mode_scans"] = times
-        data.save_data(changed_data=load)
+        data = user_settings().load_file()
+        data["monitor_mode_scans"] += 1
+        user_settings().save_data(changed_data=data)
         
 
 
@@ -488,9 +493,6 @@ class monitor_mode():
                         panel_t.renderable = f"[bold red]Beginning next subnet scan in:[/bold red][bold green] {timer}[/bold green]"
                 
                             
-
-           
-
 
             except KeyboardInterrupt as e:
                 print("")

@@ -3,7 +3,7 @@
 
 # IMPORTS FOR OTHER PROGRAM MODULES
 from monitor import monitor_mode
-from user_settings import settings_menu
+from user_settings import settings_menu, user_settings
 from threaded_common_portscan import get_ip_subnet
 from extra_features import Logging 
 
@@ -525,6 +525,12 @@ class user_interface():
                 self.exe.clear_screen()
                 mm = monitor_mode()
                 mm.main()
+
+                # NOW TO KILL BACKGROUND THREADS
+                load = user_settings().load_file()
+                load["background_thread"] = False
+                user_settings().save_data(changed_data=load)
+
                
                 break
             
@@ -590,6 +596,7 @@ class user_interface():
             # SETTINGS MENU
             elif choice == "6":
               # REDIRECT TO SETTINGS MODULE
+                #self.exe.clear_screen()
                 settings = settings_menu()
                 settings.settings()
                 self.exe.clear_screen()
@@ -631,4 +638,4 @@ if __name__ == "__main__":
             main.user_choose()
 
 
-    console.input("Press enter to leave")
+    console.input("Press enter to leave: ")

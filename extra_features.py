@@ -141,6 +141,7 @@ class connection_status():
 class utilities():
 
     def __init__(self):
+        self.noty_counter = 0
         pass
 
     def clear_screen(self):
@@ -170,7 +171,7 @@ class utilities():
             console.print(f"Error sending notification: {e}")
     
 
-    def tts(self, letter):
+    def tts(self, letter, voice_rate= 20):
         """Responsible for text to speech"""
 
         engine = pyttsx3.init()
@@ -185,7 +186,7 @@ class utilities():
         
         try:
            # engine.setProperty('volume', 20)
-            engine.setProperty('rate', rate -20)
+            engine.setProperty('rate', rate - voice_rate)
            
         except Exception as e:
             console.print(e)
@@ -201,6 +202,7 @@ class utilities():
 
         engine.say(letter)
         engine.runAndWait()
+        
     
 
     def get_vendor(mac):
@@ -235,6 +237,24 @@ class utilities():
             console.print(e)
             vendor = manuf.MacParser().get_manuf_long(mac)
             return vendor
+    
+    def noty_count(self):
+        """Responsible for keeping track of the amount of notifications sent so that way it isnt over run """
+
+        self.noty_counter += 1
+
+
+        if self.noty_counter == 60:
+            self.noty_counter = 0
+
+        elif self.noty_counter > 3:
+            return False
+        
+        else:
+            return True
+        
+        self.noty_counter
+
     
 
         
@@ -377,7 +397,7 @@ class Logging:
         self.file_log = base_dir / "log_file.txt"
         
 
-    def log_results_write(self, log):
+    def log_results_write(self, log, console = console):
         """Responsible for keeping up to date with intrusions found"""
 
         # LOOP SO THAT WAY FILE CAN BE CREATED AND RETRIED!!!

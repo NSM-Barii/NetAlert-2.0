@@ -95,10 +95,10 @@ class user_settings():
                 data = {
                     "display_name": "user",
                     "monitor_mode": False,
-                    "continous_monitoring": False,
+                    "background_thread": False,
                     "discord_webhook": False,
                     "intrusion_updates": False,
-                    "live_updates": False,
+                    "rate_limit": 50,
                     "subnet_address": "",
                     "scan_interval": 15,
                     "monitor_mode_scans": 0
@@ -168,7 +168,8 @@ class settings_menu():
                             "3. Intrusion Updates\n"
                             "4. Subnet Address\n"
                             "5. Scan Interval\n"
-                            "\n6. Exit",
+                            "6. Rate Limit"
+                            "\n7. Exit",
                             
                             title="Options",
                             style="red",
@@ -328,16 +329,56 @@ class settings_menu():
                 console.print(f"[bold green]Scan interval Successfully Updated to perform a scan every: {interval} Minutes[/bold green]")
                 time.sleep(1.8)
                 
-        
             
+            elif choice == "6":
+                
+                # SET VARIABLES
+                error = False
+                error_code = 0
+                print("\n")
+                
+                while True:
+
+                    if error:
+
+                        if error_code == 1:
+                            console.print(f"\n[bold red]Give a valid Integer goofy[/bold red]")
+                        
+                        elif error_code == 2:
+                            console.print(e)
+                    
+                    try:
+
+                        error = False
+                        error_code = 0
+
+                        rate_limit = console.input("[bold blue]Enter Rate limit:[/bold blue] ")
+
+                        valid_rate_limit = int(rate_limit)
+                        
+                        # NOW TO SAVE THE CHANGED DATA
+                        load = user_settings().load_file()
+                        load["rate_limit"] = valid_rate_limit
+                        user_settings().save_data(changed_data=load)
+
+                        break
+                    
+                    except ValueError as e:
+                        error = True
+                        error_code = 1
+
+                    except Exception as e:
+                        error = True
+                        error_code = 2
             
             # EXIT BACK TO MAIN MENU
-            elif choice == "6":
+            elif choice == "7":
                 break     
 
             # INCORRECT CHOICE
             else:
-                console.print(f"Invalid option, please try again with options(1-5)")
+                console.print(f"Invalid option, please try again with options(1-7)")
+                time.sleep(1.5)
 
     
     def not_in_use(self):

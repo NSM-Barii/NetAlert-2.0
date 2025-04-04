@@ -102,6 +102,7 @@ class common_port_scanner():
                     
                     except OSError:
                         service = known_ports.get(port, "unkown")
+                        #+console.print(f"---> {service}")
                         return
                     
                     self.filtered_ports_to_show += 1
@@ -401,8 +402,10 @@ class get_ip_subnet():
 
 
 
-start = 6
+start = 5
 
+
+# FOR MODULE TESTING
 if __name__ == "__main__":
     
     if start == 1:
@@ -415,9 +418,22 @@ if __name__ == "__main__":
 
     elif start == 2:
 
-        time.sleep(20)
+        import pyttsx3
 
-        msgg = "NOW PERFORMING GEO LOOKUP ON CODY AND JAWUAN"
+        engine = pyttsx3.init()
+
+        voices = engine.getProperty('voices')
+        rate = engine.getProperty('rate')
+
+        engine.setProperty('rate', rate -15)
+        engine.setProperty('voice', voices[1].id)
+
+        engine.say("ps4 party chat crash, Now turning off playstation")
+        engine.runAndWait()
+
+        time.sleep(1)
+
+        msgg = "NOW PERFORMING GEO LOOKUP ON ZEKE AND STARR"
 
         utilities().tts(msgg)
 
@@ -463,83 +479,6 @@ if __name__ == "__main__":
                 table.add_row(f"{tr[num]}", f"IP: {ip} | MAC: {txt}")
 
 
-import pyttsx3
-
-class packet_rate_limiting():
-    """This class will be responsible for keep tracking off the amount of packets being sent by each device within the subnet"""
-
-    def __init__(self):
-        self.watch_list = []
-        pass
-    
-
-    def packet_limiting(self, ip: str, rate_limit):
-        """Keep track of packets for ip param"""
-
-        def limiter(pkt):
-            """This will be triggered upon rate limit hit"""
-
-        # console.print(f"[bold red]Rate Limiting Triggered:[/bold red] {ip} [yellow]has sent over 1,000 packets in the last minute[/yellow]")
-            console.print(pkt)
-
-        # CHECK TO MAKE SURE DEVICE ISNT ALREADY ON THE WATCHLIST
-        
-        console.print(self.watch_list)
-        listed = any(ip in device for device in self.watch_list)
-
-        if listed == False:
-
-            # NOW TO APPEND IP TO WATCHLIST
-            self.watch_list.append(ip)
-            console.print(f"Now starting Rate limiting on: {ip} with a limit of: {rate_limit} packets")
-        
-
-            while True:
-                try:
-                     
-                    count_down = time.time()
-                    sniff(filter=f"host {ip}",prn=limiter, store=0, count=rate_limit)
-
-                    count_down_done = time.time() - count_down
-
-                    if count_down_done < 60:
-                        console.print(f"[bold red]Rate Limiting Triggered:[/bold red] {ip} [yellow]has sent over {rate_limit} packets in the last minute[/yellow]")
-                    
-                        # TESTING PURPOSES WILL CLEAN THIS SCRIPT UP SOON
-                        
-
-                        end = ip.split('.')[3]
-
-                        #name = random.randint(1, end)
-                        user_id = f"engine_{end}"
-                        console.print(user_id)
-                        user_id = pyttsx3.init()
-                        
-                        rate = user_id.getProperty('rate')
-
-                        user_id.setProperty('rate', 160)
-
-                        voices = user_id.getProperty('voices')
-                        user_id.setProperty('voice', voices[1].id)
-                        user_id.say("RATE LIMITING TRIGGERED")
-                        user_id.runAndWait()
-                    
-
-
-                    else:
-                        console.print(f"[bold green]Device:[/bold green] {ip}[yellow] has passed the check[/yellow]")
-            
-                except Exception as e:
-                    console.print(e)
- 
-
-
-        # FOR TESTING PURPOSES TO MAKE SURE THIS IS WORKING
-        else:
-            console.print(f"Device: {ip} is already inside of the watchlist")
-
-#packet_rate_limiting().packet_limiting(ip="192.168.1.133", rate_limit=50)
-
 
 
 def light():
@@ -566,8 +505,8 @@ def light():
         await bulb.turn_on()
 
 
-    # Run the async function properly
-    #asyncio.run(control_bulb())
+    #Run the async function properly
+    asyncio.run(control_bulb())
     console.print("howdy")
 
 
@@ -576,9 +515,72 @@ def light():
 
 
 
+#light()
 
 
 
+import asyncio
+from kasa import Discover, SmartBulb
+from kasa.iot import iotbulb
 
 
+async def light_switch():
+    """This will be used to get and control network lights"""
+    
+    # STORE LIGHTBULBS IN HERE
+    lights = []
 
+    scan = False
+
+    
+    if scan:
+        try:
+            # DISCOVER ANY AND ALL LIGHT BULBS
+            bulbs = await Discover.discover()
+
+            for key, value in bulbs.items():
+
+                console.print(f"Found you: {key}, {value.device_type},  {value.device_id},  {value.alias}")
+                lights.append(key)
+        
+        except Exception as e:
+            console.print(e)
+    
+    
+    # OBJECT TO CONTROL LIGHT BULBS
+    lights.append("192.168.1.70")
+    
+    if scan:
+        while True:
+            for light in lights:
+                bulb = SmartBulb(light)
+                await bulb.update()
+                await bulb.turn_on()
+                await bulb.set_brightness(70)  # Set brightness to 70%
+                await bulb.set_hsv(240, 100, 100)  # Set color to blue
+                await asyncio.sleep(2)
+
+    colors = [
+        (0, 100, 100),   # Red
+        (60, 100, 100),  # Yellow
+        (120, 100, 100), # Green
+        (180, 100, 100), # Cyan
+        (240, 100, 100), # Blue
+        (300, 100, 100)  # Magenta
+    ]
+    
+    bulb = SmartBulb("192.168.1.70")
+    for hsv in colors:
+        await bulb.update()
+        print(f"Changing to {hsv}")
+        await bulb.set_hsv(*hsv)
+        await asyncio.sleep(2)
+
+    await bulb.turn_off()
+                    
+
+
+   # console.print(bulbs)
+
+
+    asyncio.run(light_switch())
