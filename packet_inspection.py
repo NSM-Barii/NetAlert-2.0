@@ -98,31 +98,34 @@ class packet_rate_limiting():
 
                     count_down_done = time.time() - count_down
 
-                    if count_down_done < 60:
-                        console.print(f"[bold red]Rate Limiting Triggered:[/bold red] {ip} [yellow]has sent over {rate_limit} packets in the last minute[/yellow]")
-                    
-                        if use:
-                            with locker:
+                    # RECHECK THE BACKGROUND THREAD AGAIN TO MAKE SURE VALUE IS TRUE
+                    if user_settings().load_file()['background_thread']:
 
-                                # LOG THE INCIDENT
-                                log_format = (  
-                                    "[yellow][RATE LIMITING TRIGGERED][/yellow] - "  
-                                    f"[bold white]IP:[/bold white] [bold cyan]{ip}[/bold cyan] | "  
-                                    f"[bold white]MAC:[/bold white] [bold yellow]{mac}[/bold yellow] | "  
-                                    f"[bold white]Vendor:[/bold white] [bold magenta]{vendor}[/bold magenta] | "  
-                                    f"[bold white]Host:[/bold white] [bold green]{host}[/bold green]"  
-                                )  
-                                Logging().log_results_write(log=log_format, console=console)
+                        if count_down_done < 60:
+                            console.print(f"[bold red]Rate Limiting Triggered:[/bold red] {ip} [yellow]has sent over {rate_limit} packets in the last minute[/yellow]")
+                        
+                            if use:
+                                with locker:
 
-
-                                # WARN THE USER
-                                utilities().tts(letter=f"RATE LIMITING TRIGGERED ON: {ip}", voice_rate=15)
-                                
-                    
+                                    # LOG THE INCIDENT
+                                    log_format = (  
+                                        "[yellow][RATE LIMITING TRIGGERED][/yellow] - "  
+                                        f"[bold white]IP:[/bold white] [bold cyan]{ip}[/bold cyan] | "  
+                                        f"[bold white]MAC:[/bold white] [bold yellow]{mac}[/bold yellow] | "  
+                                        f"[bold white]Vendor:[/bold white] [bold magenta]{vendor}[/bold magenta] | "  
+                                        f"[bold white]Host:[/bold white] [bold green]{host}[/bold green]"  
+                                    )  
+                                    Logging().log_results_write(log=log_format, console=console)
 
 
-                    else:
-                        console.print(f"[bold green]Device:[/bold green] {ip}[yellow] has passed the check[/yellow]")
+                                    # WARN THE USER
+                                    utilities().tts(letter=f"RATE LIMITING TRIGGERED ON: {ip}", voice_rate=15)
+                                    
+                        
+
+
+                        else:
+                            console.print(f"[bold green]Device:[/bold green] {ip}[yellow] has passed the check[/yellow]")
             
                 except Exception as e:
                     console.print(e)

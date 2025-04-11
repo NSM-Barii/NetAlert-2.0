@@ -205,7 +205,7 @@ class monitor_mode():
                     ip = ip.strip()
                    # with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s
                     try:
-                        
+                    
                         host = socket.gethostbyaddr(ip)[0].split('.')[0]
      
                     except (socket.herror, socket.gaierror):

@@ -224,7 +224,7 @@ class utilities():
                 # FALL BACK TO GETTING MAC FROM PYTHON LIBARY // IN CASE OF RATE LIMITING ESPICIALLY
                 vendor = manuf.MacParser().get_manuf_long(mac) 
                 
-                vendor = vendor if vendor else "Not availiable"
+                vendor = vendor if vendor else "Unknown"
 
                 return vendor
       

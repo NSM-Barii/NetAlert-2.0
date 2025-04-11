@@ -119,5 +119,30 @@ class Router_Controller():
 # FOR MODULE TESTING
 if __name__ == "__main__":
 
+    print()
 
-    Router_Controller().get_devices()
+
+
+
+import socket
+import dns.resolver  # You'll need to install dnspython
+
+def resolve_with_custom_dns(ip):
+    try:
+        # Use custom DNS server (e.g., Google DNS)
+        resolver = dns.resolver.Resolver()
+        resolver.nameservers = ['8.8.8.8']  # Google DNS
+
+        # Perform reverse DNS lookup
+        result = resolver.resolve(ip, 'A')
+        return result
+    except (dns.resolver.NoAnswer, dns.exception.DNSException) as e:
+        print(f"DNS resolution failed for {ip}: {e}")
+        return None
+
+ip = "192.168.1.1"  # Example IP
+hostname = resolve_with_custom_dns(ip)
+if hostname:
+    print(f"Resolved Hostname: {hostname}")
+else:
+    print(f"Failed to resolve hostname for {ip}")

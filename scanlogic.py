@@ -383,6 +383,7 @@ class file_handling():
                 # SPLIT THE INFO INTO VARIABLES SO WE CAN THEN ADD IT TO A DICTIONARY AS A KEY PAIR
                 for key_combo in letter:
                     info = key_combo.split('/')
+
                     num = info[0]
                     vendor = info[1]
                     host = info[2]
@@ -414,7 +415,7 @@ class file_handling():
                 for key_combo in letter:
                     info = key_combo.split('/')
                     
-                    vendor = info[0]
+                    vendor = info[0] 
                     host = info[1]
                     ip = info[2]
                     mac = info[3]
