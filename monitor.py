@@ -219,6 +219,7 @@ class monitor_mode():
 
                     # FOR ROUTER
                     if ip == "192.168.1.1":
+                        router_info = (ip, mac)
                         host = "Gateway"
                     
                     # FOR PLAYSTATIONS
@@ -290,7 +291,7 @@ class monitor_mode():
                     mac = device.split('|')[3].partition(':')[2].strip()
                     
                    
-                    console.print(f"Currently On device: {ip} | {mac}")
+                    #console.print(f"Currently On device: {ip} | {mac}")
 
                     # LOG INTRUSION  
                     color_out = "bold cyan"  # Adjusted for better contrast  
@@ -304,11 +305,15 @@ class monitor_mode():
                     Logging().log_results_write(log=log_format)
 
                     
-                    # NOW TO RATE LIMIT THE DEVICE // MONITOR AND RECORD PACKETS
-                    threading.Thread(target=self.rate_limiter.packet_limiting, args=(ip, console, vendor, host, mac, self.lock), daemon=True).start()
+
+                    # SIMPLE CONSTANT THAT WILL BE USED TO DETERMINE WEATHER PROGRAM WILL GO BEYOND CAPTURING PACKETS
+                    type = 2
+                    USE = True if type == 1 else False
 
                     
-                    type = 1
+                    # NOW TO RATE LIMIT THE DEVICE // MONITOR AND RECORD PACKETS
+                    threading.Thread(target=self.rate_limiter.packet_limiting, args=(ip, console, vendor, host, mac, self.lock, USE), daemon=True).start()
+
                     
                     # FOR DIRECTLY INTERACTING WITH LOCAL ROUTER // STILL IN TESTING PHASE MAIN LOGIC IN ROUTER_CONTROLLER MODUEL
                     if type == 1:
@@ -316,7 +321,8 @@ class monitor_mode():
                     
                     # FOR ARP POISONING ATTACK
                     elif type == 2:
-                        kick.kick_arp(ip, mac)
+                        threading.Thread(target=kick.kick_arp, args=(ip, mac, router_info, console), daemon=True).start()
+                        time.sleep(.5)
 
                     num += 1
 
@@ -326,6 +332,7 @@ class monitor_mode():
                     
                     else:
                         console.print(f"\nCurrent devices under Network Supervision: {self.rate_limiter.watch_list}")
+
                     
             
             except Exception as e:
@@ -333,7 +340,7 @@ class monitor_mode():
 
                 #console.print(f"[bold red]Unauthorized Device Detected![/bold red] → [yellow]{device}[/yellow]")
 
-
+          
             
            # timestamp = datetime().strftime("%d/%m/%Y - %H:%M:%S")
             content = '\n\n'.join(unauthorized_devices)
@@ -428,6 +435,9 @@ class monitor_mode():
         data = user_settings().load_file()
         data["monitor_mode_scans"] += 1
         user_settings().save_data(changed_data=data)
+        
+        #time.sleep(3.5)
+        #utilities().tts(letter="NOW LAUNCHING DENIAL OF SERVICE ATTACK ACROSS NETWORK WIDE DEVICES", voice_rate=25)
         
 
 
