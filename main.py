@@ -28,16 +28,18 @@ if __name__ == "__main__":
     main = user_interface()
     online_status = connection_status()
     utilities = utilities()
+    from extra_features import utilities
     
     
     def main_run():
     
         # LOOP THE MAIN PROGRAM 
         while True:
+            utilities.arp_controller(ip=False,leave=False, destroy=True) # RESPONSIBLE FOR KILLING THREAD
             main.welcome()
             online_status.connection_check()
             main.user_choose()
-            utilities.clear_screen()
+            utilities().clear_screen()
             
     main_run()
         

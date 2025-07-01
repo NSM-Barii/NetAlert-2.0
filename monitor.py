@@ -24,6 +24,10 @@ import requests, json, sys, subprocess, random, threading
 
 class monitor_mode():
     """Solely Responsible for scanning LAN & displaying to the user feedback on scan results"""
+
+
+    # CLASS METHOD
+    watchlist = []
     
 
     def __init__(self):
@@ -278,7 +282,6 @@ class monitor_mode():
             intrusion_update = ns["intrusion_updates"]
 
             kick = utilities()
-            
 
             
             try:

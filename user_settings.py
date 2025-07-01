@@ -49,7 +49,7 @@ class user_settings():
         try:
             with open(path, "w")  as file:
                 json.dump(changed_data, file, indent=indent)
-                console.print("File successfully updated", style="bold green")
+                #console.print("File successfully updated", style="bold green")
             
         except FileNotFoundError as e:
             self.create_file()

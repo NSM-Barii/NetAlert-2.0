@@ -140,9 +140,19 @@ class connection_status():
 
 class utilities():
 
+
+    # FOR ARP CONTROLLER
+    online = True
+    watchlist = []
+
+
     def __init__(self):
         self.noty_counter = 0
+
+
         pass
+
+
 
     def clear_screen(self):
         """Clear Screen Command"""
@@ -238,6 +248,7 @@ class utilities():
             vendor = manuf.MacParser().get_manuf_long(mac)
             return vendor
     
+
     def noty_count(self):
         """Responsible for keeping track of the amount of notifications sent so that way it isnt over run """
 
@@ -255,17 +266,85 @@ class utilities():
         
         self.noty_counter
 
-    
+
 
         
     
+    
+    @classmethod
+    def arp_controller(cls, ip, leave=False, destroy=False, check=False, add=False):
+        """This method will be responsible for controller kick_arp <-- """   
+
+        # FOR ERRORS
+        verbose = False
+
+
+        
+        # FOR KILLING ALL THREADS
+        if destroy:
+            cls.watchlist = []
+
+            if verbose:
+                console.print("cleaned watchlist")
+
+                return
+
+
+        # FOR REMOVING FROM WATCHLIST
+        elif leave:
+            cls.watchlist.remove(ip)
+
+            if verbose:
+                console.print(f"I am removed: {ip}")
+
+            
+            return 
+    
+        
+        # FOR CHECKING IF THAT IP IS IN THE WATCHLIST
+        elif check:
+
+            if ip in cls.watchlist:
+
+                if verbose:
+                    console.print(f"im in the watchlist: {ip}")
+
+                return True
+            
+            else:
+
+                if verbose:
+                    console.print(f"im NOT in the watchlist: {ip}")
+
+
+                return False
+        
+        
+        # FOR ADDING TO THE LIST
+        elif add:
+
+            if ip not in cls.watchlist:
+                cls.watchlist.append(ip)
+
+                if verbose:
+                    console.print(f"i added: {ip}")
+               
+                return True
+            
+            # SKIP THIS INSTANCE
+            else:
+                return False
+
+
+
+
     def kick_arp(self, ip: str, mac: str, router_info: tuple, CONSOLE):
         """Responsible for disallowing unauthorized devices found on the network"""
 
-        CONSOLE.print(f"\n[bold red]Poisoning:[/bold red] {ip} <---> {mac}")
 
-        #info = unauthorized_device.split('|')
-        #ip = info[2]
+        CONSOLE.print(f"[bold red]Poisoning:[/bold red] {ip} <---> {mac}")
+
+
 
         online = True
         packets_sent = 0
@@ -294,8 +373,14 @@ class utilities():
         # NOTIFY USER THAT THE ATTACK IS STARTING
         msg_start = f"Now launching a Denial-of-service attack on {ip}"
         #threading.Thread(target=utilities().tts, args=(msg_start,)).start()
+        
 
-        while online:
+        # KEEPS TRACK OF WATCHLIST
+        if utilities.arp_controller(ip=ip, leave=False, add=True) == False:
+            return
+
+
+        while utilities.arp_controller(ip=ip, leave=False, destroy=False, check=True):
 
             sendp(packet_layer_2, verbose=False)
             sendp(packet_for_router, verbose=False)
@@ -314,7 +399,7 @@ class utilities():
                 RESPONSE = True
 
 
-                if RESPONSE:
+                if response:
                     CONSOLE.print(f"Device: {ip} is still online resuming Denial-of-Service attack, Total Packets sent: {total_packets}")
 
                 else:
@@ -330,6 +415,11 @@ class utilities():
                     sniff_thread.start()
 
                     online = False
+
+
+                    utilities.arp_controller(ip=ip, leave=True)
+
+                    return
             
                 # RESPONSIBLE FOR KEEPING TRACK OFF TOTAL PACKETS SENT // RESTART PACKETS_SENT VARIABLE
                 
@@ -338,6 +428,9 @@ class utilities():
             
            # print(f"Packets sent: {total_packets}", end='\r', flush=True)
             packets_sent += 1
+    
+
+        CONSOLE.print(f"[bold red]Background Thread: {ip} - [bold green]successfully killed")
 
     
     def kick_blacklist(self, vendor: str, host: str, ip: str, mac: str):
